@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Анкета{% endblock %}
+
+{% block link_style %}<link rel="stylesheet" href="{{ url_for('static', filename='anketa.css') }}">{% endblock %}
+
+{% block content %}
+    <h1>Форма сбора данных</h1>
+    {% block admin_content %}{% endblock %}
+    <form method="post">
+        <div class="section">
+            <h2 class="section-title">Выберите группы, с которыми вам предстоит работать в течение семестра</h2>
+            <table class="data-table" id="colors-table">
+                <thead>
+                    <tr>
+                        <th>1 Курс</th>
+                        <th>2 Курс</th>
+                        <th>3 Курс</th>
+                        <th>4 Курс</th>
+                        <th>5 Курс</th>
+                        <th>6 Курс</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% set courses = {
+                            '1': range(11, 20),
+                            '2': range(31, 40),
+                            '3': range(51, 60),
+                            '4': range(71, 80),
+                            '5': range(91, 100),
+                            '6': range(111, 120)
+                        } %}
+
+                        {% for course, numbers in courses.items() %}
+                        <td>
+                            {% for num in numbers %}
+                                {% set group_name = 'ИУ10-' ~ num %}
+                                {% if group_name in groups_list %}
+                                    {{ group_name }}
+                                    <select name="subjects{{ num }}">
+                                        <option value="subject0"></option>
+                                        {% for ind, subject in subjects %}
+                                        <option value="subject{{ ind }}">{{ subject }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <select name="ls{{ num }}">
+                                        <option value="subject0"></option>
+                                        <option value="subject1">Семинар</option>
+                                        <option value="subject2">Лекция</option>
+                                    </select>
+                                    <br>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="section">
+            <h2 class="section-title">Выберите время, в которое вам удобно работать</h2>
+            <table class="data-table" id="sizes-table">
+                <thead>
+                    <tr>
+                        {% for day in ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'] %}
+                            <th>{{ day }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for day_num in range(1, 7) %}
+                            <td>
+                                {% set time_slots = [
+                                    (1, '08:30 - 10:00'),
+                                    (2, '10:10 - 11:40'),
+                                    (3, '11:50 - 13:20'),
+                                    (4, '14:05 - 15:35'),
+                                    (5, '15:55 - 17:25'),
+                                    (6, '17:35 - 19:05'),
+                                    (7, '19:15 - 20:45')
+                                ] %}
+                                {% for slot_num, display_time in time_slots %}
+                                    {{ display_time }}
+                                    <input type="checkbox"
+                                           id="time{{ day_num }}{{ slot_num }}"
+                                           name="choice{{ day_num }}{{ slot_num }}"
+                                           value="{{ display_time }}">
+                                    <button type="button" class="week-btn" name="week_type{{ day_num }}{{ slot_num }}" value="odd">Чс</button>
+                                    <button type="button" class="week-btn" name="week_type{{ day_num }}{{ slot_num }}" value="even">Зн</button>
+                                    <br>
+                                {% endfor %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="submit-btn">Отправить данные</button>
+    </form>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var group_data = {{ group_data|tojson|safe }};
+    var schedule_data = {{ schedule_data|tojson|safe }};
+
+    for (var group_name in group_data) {
+        if (group_data.hasOwnProperty(group_name)) {
+            // Извлекаем номер группы (например, 11 из "ИУ10-11")
+            var group_num = group_name.split('-')[1];
+            var subject_value = group_data[group_name][0];
+            var lesson_type = group_data[group_name][1];
+
+            var subject_elements = document.getElementsByName("subjects" + group_num);
+            if (subject_elements.length > 0) {
+                subject_elements[0].value = subject_value;
+            }
+
+            var lesson_elements = document.getElementsByName("ls" + group_num);
+            if (lesson_elements.length > 0) {
+                lesson_elements[0].value = lesson_type;
+            }
+        }
+    }
+
+    var days = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    var time_slots = [
+        '08:30 - 10:00',
+        '10:10 - 11:40',
+        '11:50 - 13:20',
+        '14:05 - 15:35',
+        '15:55 - 17:25',
+        '17:35 - 19:05',
+        '19:15 - 20:45'
+    ];
+
+    for (var day_num = 1; day_num <= 6; day_num++) {
+        var day_name = days[day_num - 1];
+        var day_times = schedule_data[day_name] || [];
+
+        for (var slot_num = 1; slot_num <= 7; slot_num++) {
+            var time = time_slots[slot_num - 1];
+
+            for (var i = 0; i < day_times.length; i++) {
+                if (day_times[i] === time) {
+                    var checkbox = document.getElementsByName("choice" + day_num + slot_num);
+                    if (checkbox.length > 0) {
+                        checkbox[0].checked = true;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

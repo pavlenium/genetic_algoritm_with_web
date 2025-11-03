@@ -1,0 +1,216 @@
+/* Базовые стили */
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+.course-selector {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.course-selector button {
+    padding: 8px 15px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.course-selector button.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.week-type-selector {
+    margin-bottom: 15px;
+}
+
+.week-type-selector button {
+    padding: 5px 10px;
+    margin-right: 5px;
+    cursor: pointer;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.week-type-selector button.active {
+    background-color: #5bc0de;
+    color: white;
+}
+
+/* Стили таблицы */
+.schedule-container {
+    overflow-x: auto;
+}
+
+.day-container {
+    margin-bottom: 30px;
+}
+
+.day-header {
+    background-color: #dff0d8;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.2em;
+    padding: 10px;
+    margin-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    border: 2px solid #4CAF50;
+    border-bottom: none;
+}
+
+table {
+    border-collapse: separate;
+    width: 100%;
+    border: 2px solid #4CAF50;
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+    margin-top: 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+th, td {
+    border: 1px solid #ddd;
+    text-align: center;
+    position: relative;
+}
+
+th {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    border-bottom: 2px solid #4CAF50;
+}
+
+/* Стили колонок */
+.time-column {
+    background-color: #f9f9f9;
+    font-weight: bold;
+    white-space: nowrap;
+    border-right: 2px #4CAF50;
+    width: 120 px !important;
+    font-size: 1em;
+}
+
+/* Уменьшенные стили для колонок групп (в 5 раз по ширине, в 3 раза по высоте) */
+.group-header {
+    background-color: #e6e6e6;
+    font-weight: bold;
+    width: 75px; /* 375px / 5 */
+    min-width: 75px;
+    border-bottom: 3px solid #4CAF50;
+    padding: 5px;
+    font-size: 0.9em;
+}
+
+.group-cell {
+    position: relative;
+    width: 150px; /* 375px / 5 */
+    min-width: 75px;
+    height: 100px; /* 300px / 3 */
+    padding: 0 !important;
+    border: 1px solid #e0e0e0;
+    border-bottom: 3px solid #d0d0d0;  /* Жирная красная граница */
+    vertical-align: top;
+    text-align: left;
+}
+
+.group-top, .group-bottom {
+    height: 100px; /* 150px / 3 */
+    padding: 5px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 0.7em;
+}
+
+.group-top {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Стили содержимого */
+.lesson-subject {
+    font-weight: bold;
+    font-size: 0.8em;
+    margin-bottom: 3px;
+}
+
+.lesson-teacher {
+    font-style: italic;
+    color: #555;
+    font-size: 0.7em;
+    margin-bottom: 3px;
+}
+
+.lesson-week-type {
+    color: #4CAF50;
+    font-size: 0.7em;
+}
+
+/* Стили для разделенных ячеек */
+.split-cell {
+    padding: 0 !important;
+}
+
+.lesson-part {
+    height: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 2px;
+}
+
+.numerator {
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* Стили состояния */
+.lesson-blocked {
+    background-color: #ffe6e6;
+    color: #cc0000;
+    border: 1px solid #ff9999;
+}
+
+.lesson-part.lesson-blocked {
+    background-color: #ffe6e6;
+    color: #cc0000;
+}
+
+/* Добавить вместо него */
+td:hover {
+    background-color: #f5f5f5 !important;
+}
+
+/* Разделители */
+th:not(:last-child),
+td:not(:last-child) {
+    border-right: 1px solid #d0d0d0;
+}
+
+/* Скрытие/показ курсов */
+.course-table {
+    display: none;
+}
+
+.course-table.active {
+    display: block;
+}
+
+.disabled-btn {
+    opacity: 0.7;
+    cursor: not-allowed;
+    background-color: #ccc !important;
+}
+
+.lesson-type {
+    color: grey;
+    font-size: 9px;
+    font-weight: bold;
+}

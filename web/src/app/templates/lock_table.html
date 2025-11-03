@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='anketa.css') }}">
+</head>
+<body>
+<br>
+<br>
+<br>
+<br>
+<br>
+<form method="post">
+    <input type="hidden" name="active_tab" value="lock-slot-tab">
+    <div class="section">
+        <div class="section">
+            <h2 class="section-title">Укажите время для блокировки слота</h2>
+            <table class="data-table" id="sizes-table">
+                <thead>
+                <tr>
+                    {% for day in ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'] %}
+                    <th>{{ day }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    {% for day_num in range(1, 7) %}
+                    <td>
+                        {% set time_slots = [
+                        (1, '08:30 - 10:00'),
+                        (2, '10:10 - 11:40'),
+                        (3, '11:50 - 13:20'),
+                        (4, '14:05 - 15:35'),
+                        (5, '15:55 - 17:25'),
+                        (6, '17:35 - 19:05'),
+                        (7, '19:15 - 20:45')
+                        ] %}
+                        {% for slot_num, display_time in time_slots %}
+<!--                        {{ display_time }}-->
+                        <div>
+                            <span class="time-label">{{ display_time }}</span>
+                            <input type="checkbox"
+                                   id="time{{ day_num }}{{ slot_num }}"
+                                   name="choice{{ day_num }}{{ slot_num }}"
+                                   value="{{ display_time }}"
+                                   class="time-checkbox">
+                            <input type="checkbox"
+                                   id="odd{{ day_num }}{{ slot_num }}"
+                                   name="odd_week{{ day_num }}{{ slot_num }}"
+                                   value="{{ display_time }}"
+                                   class="week-checkbox">
+                            <label for="odd{{ day_num }}{{ slot_num }}" class="week-label">Чс</label>
+                            <input type="checkbox"
+                                   id="even{{ day_num }}{{ slot_num }}"
+                                   name="even_week{{ day_num }}{{ slot_num }}"
+                                   value="{{ display_time }}"
+                                   class="week-checkbox">
+                            <label for="even{{ day_num }}{{ slot_num }}" class="week-label">Зн</label>
+                        </div>
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" name="action" value="add_lock_subj" class="submit-btn">Отправить данные</button>
+    </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Данные с бекенда
+        const scheduleData = {{ scheduleData|tojson|safe }};
+        console.log("Received schedule data:", scheduleData);
+
+        // Соответствие дней недели их номерам
+        const dayNumbers = {
+            'Понедельник': 1,
+            'Вторник': 2,
+            'Среда': 3,
+            'Четверг': 4,
+            'Пятница': 5,
+            'Суббота': 6
+        };
+
+        // Соответствие временных слотов их номерам
+        const timeSlots = {
+            '08:30 - 10:00': 1,
+            '10:10 - 11:40': 2,
+            '11:50 - 13:20': 3,
+            '14:05 - 15:35': 4,
+            '15:55 - 17:25': 5,
+            '17:35 - 19:05': 6,
+            '19:15 - 20:45': 7
+        };
+
+        // Обработка кликов по основному чекбоксу времени
+        document.querySelectorAll('.time-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const id = this.id.replace('time', '');
+                const oddCheckbox = document.querySelector(`#odd${id}`);
+                const evenCheckbox = document.querySelector(`#even${id}`);
+
+                if (this.checked) {
+                    // При включении основного чекбокса отмечаем обе недели
+                    if (oddCheckbox) oddCheckbox.checked = true;
+                    if (evenCheckbox) evenCheckbox.checked = true;
+                } else {
+                    // При выключении - снимаем обе недели
+                    if (oddCheckbox) oddCheckbox.checked = false;
+                    if (evenCheckbox) evenCheckbox.checked = false;
+                }
+            });
+        });
+
+        // Отмечаем выбранные временные слоты и недели
+        if (scheduleData) {
+            for (const [day, timeEntries] of Object.entries(scheduleData)) {
+                const dayNum = dayNumbers[day];
+
+                for (const [timeSlot, weekType] of Object.entries(timeEntries)) {
+                    const slotNum = timeSlots[timeSlot];
+
+                    if (dayNum && slotNum) {
+                        // Устанавливаем основной чекбокс времени
+                        const timeCheckbox = document.querySelector(`input[name="choice${dayNum}${slotNum}"]`);
+                        if (timeCheckbox) timeCheckbox.checked = true;
+
+                        // Устанавливаем чекбоксы недель
+                        const oddCheckbox = document.querySelector(`input[name="odd_week${dayNum}${slotNum}"]`);
+                        const evenCheckbox = document.querySelector(`input[name="even_week${dayNum}${slotNum}"]`);
+
+                        if (weekType === 'odd' || weekType === 'both') {
+                            if (oddCheckbox) oddCheckbox.checked = true;
+                        }
+                        if (weekType === 'even' || weekType === 'both') {
+                            if (evenCheckbox) evenCheckbox.checked = true;
+                        }
+                    }
+                }
+            }
+        } else {
+            console.warn("No schedule data received");
+        }
+
+        // Обработка кликов по неделям
+        document.querySelectorAll('.week-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const daySlot = this.name.replace(/odd_week|even_week/, '');
+                const timeCheckbox = document.querySelector(`input[name="choice${daySlot}"]`);
+
+                if (this.checked) {
+                    timeCheckbox.checked = true;
+                } else {
+                    // Проверяем, остались ли другие выбранные недели для этого времени
+                    const otherWeekType = this.name.startsWith('odd_week') ? 'even_week' : 'odd_week';
+                    const otherCheckbox = document.querySelector(`input[name="${otherWeekType}${daySlot}"]`);
+
+                    if (!otherCheckbox || !otherCheckbox.checked) {
+                        timeCheckbox.checked = false;
+                    }
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

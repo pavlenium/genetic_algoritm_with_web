@@ -1,0 +1,51 @@
+version: '3'
+services:
+  studyapp:
+    container_name: studyapp
+    build:
+      context: ./web/src/
+    restart: always
+    env_file:
+      .env
+    environment:
+      POSTGRES_HOST: "postgres"
+    ports:
+      - "${WIKI_PORT}:2048"
+    depends_on:
+      postgres:
+        condition: service_healthy
+#    healthcheck:
+#      test: curl -sS http://127.0.0.1:2048/health || exit 1
+#      interval: 5s
+#      timeout: 10s
+#      retries: 3
+  postgres:
+    image: postgres:latest
+    restart: always
+    env_file:
+      .env
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    ports:
+      - "${POSTGRES_PORT}:5432" # Для удобства на этапе разработки смотреть базу данных, в проде обращаться по имени контейнера без внешнего доступа
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "${POSTGRES_DB}" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+  generator:
+    ports:
+      - "8080:8000"
+    container_name: generator
+    build:
+      context: ./generator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      .env

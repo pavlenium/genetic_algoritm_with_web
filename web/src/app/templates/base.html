@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='герб.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+    {% block link_style %}{% endblock %}
+    <!-- Bootstrap CSS (обязательно) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons (опционально) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="fio-container">
+            <strong>{{ user }}</strong>
+        </div>
+        <a href="/basic">Общая Информация</a>
+        <a href="/anketa">Анкета</a>
+        <a href="/admin" class="admin-panel">Админ Панель</a>
+        <a href="/logout">Выход</a>
+        <br>
+<!--        {% if g.is_admin %}-->
+<!--        <form method="POST">-->
+<!--            <select name="peoples">-->
+<!--                <option value=""></option>-->
+<!--                {% for people in peoples %}-->
+<!--                <option value="{{people}}">{{people}}</option>-->
+<!--                {% endfor %}-->
+<!--            </select>-->
+<!--            <button type="submit" class="btn btn-primary" name="choice_teacher" value="choice_teacher">Выбрать Преподавателя</button>-->
+<!--        </form>-->
+<!--        {% endif %}-->
+    </div>
+
+    <div class="content">
+        {% block content %}{% endblock %}
+<!--        <h1>Hello World!</h1>-->
+<!--        <p>Содержимое страницы будет отображаться здесь.</p>-->
+    </div>
+
+</body>
+</html>
+
