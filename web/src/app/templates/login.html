@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='герб.png') }}">
+    <title>Вход</title>
+    <style>
+        body {
+            background-color: #F5F5DC;
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 75vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            text-align: center;
+        }
+
+        .login-container h2 {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            position: relative; /* Относительное позиционирование для кнопки */
+        }
+
+        .form-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            color: black; /* Черный текст */
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #66b366;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-1%);
+            cursor: pointer;
+            user-select: none;
+            color: #888;
+            font-size: 1.2em; /* Увеличиваем размер, чтобы было лучше видно */
+        }
+
+        .login-button {
+            background-color: #4CAF50; /* Зеленый */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .login-button:hover {
+            background-color: #66b366; /* Подсветка зеленым */
+        }
+
+        .error-message {
+            color: red;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Вход</h2>
+        {% if error %}
+            <div class="error-message">{{ error }}</div>
+        {% endif %}
+        <form action="/login" method="post">
+            <div class="form-group">
+                <label for="username">Логин:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required>
+                <span class="password-toggle" onclick="togglePasswordVisibility(this)">&#x1F441;</span>
+            </div>
+            <button type="submit" class="login-button">Войти</button>
+        </form>
+    </div>
+
+    <script>
+        function togglePasswordVisibility(element) {
+            const passwordInput = document.getElementById("password");
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                element.textContent = "Скрыть"; // Открытый глаз
+            } else {
+                passwordInput.type = "password";
+                element.textContent = "Показать"; // Закрытый глаз
+            }
+        }
+    </script>
+</body>
+</html>

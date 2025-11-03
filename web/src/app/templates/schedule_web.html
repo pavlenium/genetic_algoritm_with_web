@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}Расписание{% endblock %}
+{% block link_style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='schedule_web.css') }}">{% endblock %}
+{% block content %}
+<body>
+<h1>Расписание занятий</h1>
+<div class="course-selector">
+    <button class="course-btn active" id="btn-course-1" onclick="changeCourse('1');">1 Курс</button>
+    <button class="course-btn" id="btn-course-2" onclick="changeCourse('2');">2 Курс</button>
+    <button class="course-btn" id="btn-course-3" onclick="changeCourse('3');">3 Курс</button>
+    <button class="course-btn" id="btn-course-4" onclick="changeCourse('4');">4 Курс</button>
+    <button class="course-btn" id="btn-course-5" onclick="changeCourse('5');">5 Курс</button>
+    <button class="course-btn" id="btn-course-6" onclick="changeCourse('6');">6 Курс</button>
+</div>
+
+<div class="week-type-selector" id="div-week-btns">
+    <button class="week-type-btn active" onclick="changeWeek('all');" id="btn-week-all">Все недели</button>
+    <button class="week-type-btn" onclick="changeWeek('num');" id="btn-week-num">Числитель</button>
+    <button class="week-type-btn" onclick="changeWeek('denum');" id="btn-week-denum">Знаменатель</button>
+</div>
+<form method="post" id="recreate-form">
+    <input type="hidden" name="current_course" id="current-course-input" value="1">
+    <input type="hidden" name="current_week_type" id="current-week-type-input" value="all">
+    <button type="button" id="recreate-btn" class="btn btn-warning">Пересоздать расписание</button>
+</form>
+<br>
+{% for course in groups_by_courses.keys() %}
+<div id="tables-container-{{course}}">
+    {% for day in ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'] %}
+    <div class="day-container"><h2 class="day-header">{{day}}</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Время</th>
+                {% for groupname in groups_by_courses[course] %}
+                <th class="group-header">{{groupname}}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for lesson_slot in metadata["lesson_slots"] %}
+            <tr>
+                <td class="time-column">{{lesson_slot[0]}}</td>
+                {% for groupname in groups_by_courses[course] %}
+                <td class="group-cell" id="cell_{{day}}_{{groupname}}_{{lesson_slot[0]}}">
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+{% endfor %}
+
+<!-- Вставьте этот скрипт перед закрывающим тегом </body> -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const recreateBtn = document.getElementById('recreate-btn');
+        const recreateForm = document.getElementById('recreate-form');
+        let isCooldown = false;
+
+        recreateBtn.addEventListener('click', async function() {
+            if (isCooldown) return;
+
+            // Блокируем кнопку
+            isCooldown = true;
+            this.disabled = true;
+            const originalText = this.textContent;
+            this.textContent = 'Подождите...';
+            this.classList.add('disabled-btn');
+
+            try {
+                // Создаем FormData из формы
+                const formData = new FormData(recreateForm);
+                formData.append('action', 'recreate_schedule');
+
+                // Отправляем данные fetch-запросом
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Обновляем страницу после успешной отправки
+                    window.location.reload();
+                } else {
+                    alert('Ошибка при пересоздании расписания');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Произошла ошибка');
+            } finally {
+                // Разблокируем кнопку через 3 секунды в любом случае
+                setTimeout(() => {
+                    isCooldown = false;
+                    this.disabled = false;
+                    this.textContent = originalText;
+                    this.classList.remove('disabled-btn');
+                }, 3000);
+            }
+        });
+    });
+</script>
+<!-- Передаем данные из Flask в JavaScript -->
+<script>
+    function changeCourse(course){
+       for (let i=1; i<7;i++){
+           course_schedule = document.getElementById("tables-container-"+i);
+           course_schedule.style.display = 'none';
+
+           btn=document.getElementById("btn-course-"+i);
+           btn.className = 'course-btn';
+       }
+       course_active = document.getElementById("tables-container-"+course);
+       course_active.style.display = 'block';
+
+       btn_active=document.getElementById("btn-course-"+course);
+       btn_active.className = 'course-btn active';
+
+       document.getElementById("current-course-input").value = course;
+
+    }
+</script>
+
+<script>
+    schedule = {{ schedule|tojson|safe }};
+    function set_pairs(week_type){
+        schedule = {{ schedule|tojson|safe }};
+        // Очистка расписания
+        cells=document.getElementsByClassName("group-cell");
+        for (let i=0;i<cells.length;i++){
+            cells[i].innerHTML='';
+        };
+
+        // Заполнение расписания
+        for (const group_name of Object.keys(schedule)) {
+            for (const day_long of Object.keys(schedule[group_name])){
+                day_short = day_long.split("_")[0]; // Понедельник без Понедельник_з
+                is_numerator = day_long.split("_")[1]=="ч";  // флаг, что числитель
+
+                pairs = schedule[group_name][day_long];
+                for (let i=0; i<pairs.length; i++){
+                    // Вытягиваем данные о паре
+                    val_lecturer = pairs[i]["lecturer"];
+                    val_subject = pairs[i]["subject"];
+                    val_time = pairs[i]["time_slot"];
+                    val_pair_type = pairs[i]["lesson_type"] || "Неизвестная пара"; //"Лекция"; // TODO: тянуть из словаря, когда в нем появится
+
+                    // Ищем блок
+                    // "cell_<day>_<groupname>_<lesson_slot[0]>"
+                    block_id = "cell_"+day_short+"_"+group_name+"_"+val_time;
+                    cell_block = document.getElementById(block_id);
+
+                    // Заполняем ячейку для Чс/Зн согласно week_type
+                    if (!cell_block.innerHTML.replace(/[\n\\ ]/g,'')){
+                    switch (week_type){
+                        case 'all':
+                            cell_block.innerHTML=`
+                                <div class="group-top">
+                                    <div class="lesson-subject"></div>
+                                    <div class="lesson-teacher"></div>
+                                    <div class="lesson-type"></div>   <!-- TODO поправь класс-->
+                                    <div class="lesson-week-type"></div>
+                                </div>
+                                <div class="group-bottom">
+                                    <div class="lesson-subject"></div>
+                                    <div class="lesson-teacher"></div>
+                                    <div class="lesson-type"></div> <!-- TODO поправь класс-->
+                                    <div class="lesson-week-type"></div>
+                                </div>
+                            `;
+                            break;
+                        case 'num':
+                            cell_block.innerHTML=`
+                                <div class="group-top">
+                                    <div class="lesson-subject"></div>
+                                    <div class="lesson-teacher"></div>
+                                    <div class="lesson-type"></div>   <!-- TODO поправь класс-->
+                                    <div class="lesson-week-type"></div>
+                                </div>
+                            `;
+                            break;
+                        case 'denum':
+                            cell_block.innerHTML=`
+                                <div class="group-bottom">
+                                    <div class="lesson-subject"></div>
+                                    <div class="lesson-teacher"></div>
+                                    <div class="lesson-type"></div> <!-- TODO поправь класс-->
+                                    <div class="lesson-week-type"></div>
+                                </div>
+                            `;
+                            break;
+                    };
+                    };
+
+                    if ((is_numerator && week_type=="denum") || (!is_numerator && week_type=="num")){
+                        continue; // Если выбрано отображение только Чс, а предлагается поставить пару по Зн и наоборот
+                    };
+
+                    if (is_numerator) {
+                        cell_pair = cell_block.getElementsByClassName("group-top")[0];
+                    }else {
+                        cell_pair = cell_block.getElementsByClassName("group-bottom")[0];
+                    }
+
+                    // Ставим пару
+                    pair_subject = cell_pair.getElementsByClassName("lesson-subject")[0];
+                    pair_lecturer = cell_pair.getElementsByClassName("lesson-teacher")[0];
+                    pair_type = cell_pair.getElementsByClassName("lesson-type")[0];
+                    pair_week_type = cell_pair.getElementsByClassName("lesson-week-type")[0];
+
+
+                    pair_week_type.innerText = is_numerator ? "Чс" : "Зн";
+
+                    // Слот заблочен
+                    if (val_subject.toLowerCase().includes('заблокирован')) {
+                        cell_pair.classList.add('lesson-blocked');
+                        pair_subject.innerText="Слот заблокирован!";
+                    } else{
+                        pair_subject.innerText=val_subject;
+                        pair_lecturer.innerText=val_lecturer;
+                        pair_type.innerText = val_pair_type;
+                    }
+                }
+
+            }
+        }
+    };
+</script>
+
+<script>
+    function changeWeek(week_type){
+        // all, num, denum
+        div_btns=document.getElementById("div-week-btns");
+        buttons = div_btns.getElementsByTagName("button");
+        for (let i=0; i<buttons.length;i++){
+            buttons[i].className = "week-type-btn";
+        }
+        document.getElementById("btn-week-"+week_type).className="week-type-btn active";
+
+        document.getElementById("current-week-type-input").value = week_type;
+
+        // Установка пар по фильтру Чс/Зн
+        set_pairs(week_type);
+    };
+</script>
+
+<script>
+    window.onload = function() {
+        // Code to be executed after the page and all its resources are loaded
+        // Установка "старых" курса и типа отображения по неделям
+        changeCourse({{current_course}});
+        changeWeek('{{current_week_type}}');
+    };
+</script>
+</body>
+{% endblock %}

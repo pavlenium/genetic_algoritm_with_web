@@ -1,0 +1,58 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Левая панель (навигация) */
+.sidebar {
+    width: 250px;
+    background-color: #f0f0f0;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Контейнер для ФИО */
+.fio-container {
+    background-color: #ddd;
+    padding: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Общие стили для ссылок */
+.sidebar a {
+    display: block;
+    padding: 10px;
+    margin-bottom: 5px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+/* Стили для "Админ Панели" */
+.sidebar a.admin-panel {
+    background-color: #DC143C; /* Crimson Red */
+    color: white; /* Белый текст на красном фоне */
+}
+
+.sidebar a.admin-panel:hover {
+    background-color: #FA8072; /* Light Salmon (светло-красный при наведении) */
+}
+
+/* Стили для остальных ссылок */
+.sidebar a:not(.admin-panel) {  /* Применяем ко всем ссылкам, кроме .admin-panel */
+    background-color: #00BFFF; /* Blue */
+}
+
+.sidebar a:not(.admin-panel):hover {
+    background-color: #87CEEB; /* Sky Blue (голубой при наведении) */
+}
+
+/* Основная часть (отображение содержимого) */
+.content {
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+}

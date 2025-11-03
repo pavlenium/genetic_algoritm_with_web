@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Данные отправлены</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='герб.png') }}">
+    <style>
+        .return-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #4CAF50; /* Зелёный цвет */
+            color: white;
+            text-decoration: none;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        .return-button:hover {
+            background-color: #45a049; /* Тёмно-зелёный при наведении */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .return-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 3px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>Данные отправлены</h1>
+    <h2>Спасибо!</h2>
+    <a href="/basic" class="return-button">Вернуться на главную</a>
+</body>
+</html>

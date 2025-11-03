@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Введите пароль{% endblock %}
+
+{% block link_style %}<link rel="stylesheet" href="{{ url_for('static', filename='admin_pas.css') }}">{% endblock %}
+
+{% block content %}
+    <div class="password-container">
+        <div class="password-box">
+            <h3>Введите пароль</h3>
+            {% if error %}
+                <div class="error-message">Неверный Пароль</div>
+            {% endif %}
+            <form action="/admin" method="POST">
+                <label for="password">Пароль:</label>
+                <input type="text" id="password" name="password" required>
+                <br>
+                <br>
+                <button type="submit" class="btn btn-success">Подтвердить</button>
+            </form>
+    </div>
+{% endblock %}

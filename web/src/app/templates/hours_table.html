@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Количество пар</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='hours_table.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">Количество пар</h1>
+
+        <div class="form-container">
+            <h2 class="form-title">Укажите количество пар по предмету в неделю</h2>
+
+            <div class="info-container">
+                <div class="info-item">
+                    <span class="info-label">Предмет:</span>
+                    <span class="info-value">{{ subject }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Группа:</span>
+                    <span class="info-value">{{ group }}</span>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('admin.hours_table', subject=subject, group=group) }}">
+                <input type="hidden" name="active_tab" value="hours-tab">
+                <table class="hours-table">
+                    <thead>
+                        <tr>
+                            <th class="table-header">Тип занятия</th>
+                            <th class="table-header">Количество пар</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="activity-type">Семинары</td>
+                            <td>
+                                <input type="number" name="ch_sem" min="0" class="form-input" required
+                                       value="{{ table[0][2] }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="activity-type">Лекции</td>
+                            <td>
+                                <input type="number" name="ch_lec" min="0" class="form-input" required
+                                       value="{{ table[0][3] }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="activity-type">Лаб. работы</td>
+                            <td>
+                                <input type="number" name="ch_lab" min="0" class="form-input" required
+                                       value="{{ table[0][4] }}">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="submit" name="action" value="add_hours_subj_group" class="submit-btn">Отправить данные</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

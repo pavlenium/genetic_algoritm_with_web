@@ -1,0 +1,988 @@
+ {% extends 'base.html' %}
+
+{% block title %}Админка{% endblock %}
+
+{% block link_style %}<link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">{% endblock %}
+
+{% block content %}
+<div class="teacher-form-container">
+    <div class="form-card">
+        <h3 class="form-title">Редактирование анкеты преподавателя</h3>
+
+        <form method="POST" class="teacher-form">
+            <div class="form-group">
+                <label for="teacher-select" class="form-label">Выберите преподавателя:</label>
+                <div class="select-wrapper">
+                    <select id="teacher-select" name="peoples" class="form-select">
+                        <option value="">-- Выберите из списка --</option>
+                        {% for people in peoples %}
+                        <option value="{{people}}">{{people}}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="select-arrow"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-btn" name="val_teacher" value="val_teacher">
+                <span class="btn-text">Выбрать</span>
+                <span class="btn-icon">→</span>
+            </button>
+        </form>
+    </div>
+</div>
+<div class="admin-container">
+    <h1 class="admin-header">Административная панель</h1>
+    <!-- Навигационные вкладки -->
+    <div class="admin-tabs">
+        <button class="tab-button active" onclick="openAdminTab('teachers-tab', event)">Преподаватели</button>
+        <button class="tab-button" onclick="openAdminTab('classrooms-tab', event)">Аудитории</button>
+        <button class="tab-button" onclick="openAdminTab('groups-tab', event)">Группы</button>
+        <button class="tab-button" onclick="openAdminTab('subjects-tab', event)">Предметы</button>
+        <button class="tab-button" onclick="openAdminTab('properties-tab', event)">Свойства</button>
+        <button class="tab-button" onclick="openAdminTab('hours-tab', event)">Часы</button>
+        <button class="tab-button" onclick="openAdminTab('lock-slot-tab', event)">Блокировка слотов</button>
+        <button class="tab-button" onclick="openAdminTab('linking-tab', event)">Линковка пар</button>
+        <button class="tab-button" onclick="openAdminTab('schedule-tab', event)">Расписание</button>
+    </div>
+
+<!-- Вкладка преподавателей -->
+<div id="teachers-tab" class="admin-tab-content" style="display: block;">
+    <div class="admin-section">
+        <h3>Добавить преподавателя</h3>
+        <form method="POST" class="admin-form">
+            <input type="hidden" name="active_tab" value="teachers-tab">
+            {% if error_add_teach %}
+                <div class="error-message">Преподаватель уже существует</div>
+            {% endif %}
+            <div class="form-row">
+                <input type="text" name="teacher_name" placeholder="ФИО преподавателя" required class="form-input">
+                <button type="submit" name="action" value="add_teacher" class="form-button add-button">
+                    <i class="fas fa-plus"></i> Добавить
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="admin-section">
+        <h3>Удалить преподавателя</h3>
+        <form method="POST" class="admin-form">
+            <input type="hidden" name="active_tab" value="teachers-tab">
+            {% if error_del_teach %}
+                <div class="error-message">Такого преподавателя не существует</div>
+            {% endif %}
+            <div class="form-row">
+                <select name="teacher_name" required class="form-select">
+                    <option value="">Выберите преподавателя</option>
+                    {% for teacher in peoples %}
+                    <option value="{{ teacher }}">{{ teacher }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" name="action" value="delete_teacher" class="form-button delete-button">
+                    <i class="fas fa-trash"></i> Удалить
+                </button>
+            </div>
+        </form>
+    </div>
+    <div class="admin-section">
+        <h3>Список преподавателей</h3>
+        <div class="data-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ФИО</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for teacher in peoples %}
+                    <tr>
+                        <td>{{ teacher }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Вкладка аудиторий -->
+    <div id="classrooms-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Добавить аудиторию</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="classrooms-tab">
+                <div class="form-grid-classroom">
+                    <div class="form-group-classroom">
+                        <label>Номер аудитории</label>
+                        <input type="number" name="classroom_name" placeholder="Номер" min="1" required class="form-input">
+                    </div>
+
+                    <div class="form-group-classroom">
+                        <label>Вместимость</label>
+                        <input type="number" name="classroom_capacity" placeholder="Вместимость" min="1" required class="form-input">
+                    </div>
+
+                    <div class="form-group-classroom">
+                        <label>Свойства</label>
+                        <select name="classroom_properties" multiple class="form-multiselect">
+                            {% for prop in properties %}
+                            <option value="{{ prop }}">{{ prop }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group-classroom">
+                        <label>Учебный корпус</label>
+                        <select name="classroom_body" required class="form-select">
+                            <option value="">Выберите учебный корпус</option>
+                            {% for body in body_classroom %}
+                            <option value="{{ body }}">{{ body }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group-classroom form-button-container">
+                        <button type="submit" name="action" value="add_classroom" class="form-button add-button">
+                            <i class="fas fa-plus"></i> Добавить
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Удалить аудиторию</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="classrooms-tab">
+                <div class="form-row">
+                    <select name="classroom_name" required class="form-select">
+                        <option value="">Выберите аудиторию</option>
+                        {% for room in classrooms %}
+                            <option value="{{ room[0] }}">{{ room[0] }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="action" value="delete_classroom" class="form-button delete-button">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Список аудиторий</h3>
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Вместимость</th>
+                            <th>Свойства</th>
+                            <th>Расположение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for room in classrooms %}
+                        <tr>
+                            <td>{{ room[0] }}</td>
+                            <td>{{ room[1] }} (чел.)</td>
+                            <td>{{ room[2] }}</td>
+                            <td>{{ room[3] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка групп -->
+    <div id="groups-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Добавить группу (напишите последние 2-3 цифры новой группы ('11' для ИУ10-11 или '112' для ИУ10-112)</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="groups-tab">
+                <div class="form-grid">
+                    <div class="prefix-input-group">
+                        <span class="prefix-text">ИУ10-</span>
+                        <input type="text" name="group_name" placeholder="XX" title="Формат: ИУ10-XX" required class="form-input with-prefix">
+                    </div>
+                    <input type="number" name="group_count" placeholder="Количество студентов" min="1" required class="form-input">
+                    <button type="submit" name="action" value="add_group" class="form-button add-button">
+                        <i class="fas fa-plus"></i> Добавить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Удалить группу</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="groups-tab">
+                <div class="form-row">
+                    <select name="group_name" required class="form-select">
+                        <option value="">Выберите группу</option>
+                        {% for (name, count) in groups %}
+                        <option value="{{ name }}">{{ name }} ({{ count }} чел.)</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="action" value="delete_group" class="form-button delete-button">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Список групп</h3>
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for (name, count) in groups %}
+                        <tr>
+                            <td>{{ name }}</td>
+                            <td>{{ count }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка предметов -->
+    <div id="subjects-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Добавить предмет</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="subjects-tab">
+                <div class="form-grid">
+                    <input type="text" name="subject_name" placeholder="Название предмета" required class="form-input">
+                    <select name="subject_properties" multiple class="form-multiselect">
+                        {% for prop in properties %}
+                        <option value="{{ prop }}">{{ prop }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="action" value="add_subject" class="form-button add-button">
+                        <i class="fas fa-plus"></i> Добавить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Удалить предмет</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="subjects-tab">
+                <div class="form-row">
+                    <select name="subject_name" required class="form-select">
+                        <option value="">Выберите предмет</option>
+                        {% for subject in subjects %}
+                        <option value="{{ subject[0] }}">{{ subject[0] }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="action" value="delete_subject" class="form-button delete-button">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Список предметов</h3>
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Свойства</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td>{{ subject[0] }}</td>
+                            <td>{{ subject[1] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка свойств -->
+    <div id="properties-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Добавить свойство</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="properties-tab">
+                <div class="form-row">
+                    <input type="text" name="property_name" placeholder="Название свойства" required class="form-input">
+                    <button type="submit" name="action" value="add_property" class="form-button add-button">
+                        <i class="fas fa-plus"></i> Добавить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Удалить свойство</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="properties-tab">
+                <div class="form-row">
+                    <select name="property_name" required class="form-select">
+                        <option value="">Выберите свойство</option>
+                        {% for prop in properties %}
+                        <option value="{{ prop }}">{{ prop }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" name="action" value="delete_property" class="form-button delete-button">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Список свойств</h3>
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prop in properties %}
+                        <tr>
+                            <td>{{ prop }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка рабочих часов -->
+    <div id="hours-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Указать рабочие часы для группы</h3>
+            <form method="POST" class="admin-form" id="hours-filter-form">
+                <input type="hidden" name="active_tab" value="hours-tab">
+                <div class="form-row">
+                    <select name="hours_subject" id="hours-subject-select" class="form-select">
+                        <option value="">Выберите предмет</option>
+                        {% for subject in subjects %}
+                            <option value="{{ subject[0] }}">{{ subject[0] }}</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <select name="hours_group" id="hours-group-select" class="form-select">
+                        <option value="">Выберите группу</option>
+                        {% for group in groups %}
+                            <option value="{{ group[0] }}">{{ group[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" name="action" value="confirm_sg" class="form-button add-button">
+                    <i class="fas fa-plus"></i> Подтвердить
+                </button>
+            </form>
+        </div>
+
+        <div class="admin-section">
+            <h3>Текущий список пар</h3>
+            <div class="data-table" id="hours-table-container">
+                <!-- Этот блок будет обновляться через AJAX -->
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Предмет</th>
+                            <th>Группа</th>
+                            <th>Таблица</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hours-table-body">
+                        {% for hour in hours %}
+                        <tr>
+                            <td>
+                                {{ hour[0] }}
+                                <form method="post">
+                                    <button type="submit" name="action" value="redact_hours_{{ hour[0] }}_{{ hour[1] }}" class="form-button bg-info">Редактировать</button>
+                                </form>
+                            </td>
+                            <td>{{ hour[1] }}</td>
+                            <td>
+                                {% set table = hour %}
+                                <table class="hours-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="table-header">Тип занятия</th>
+                                            <th class="table-header">Количество пар</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="activity-type">Семинары</td>
+                                            <td>{{ table[2] }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="activity-type">Лекции</td>
+                                            <td>{{ table[3] }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="activity-type">Лаб. работы</td>
+                                            <td>{{ table[4] }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+<!--    lock-slot-tab-->
+    <div id="lock-slot-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Заморозить слот</h3>
+            <form method="POST" class="admin-form">
+                <input type="hidden" name="active_tab" value="lock-slot-tab">
+                <div class="form-row">
+                    <select name="lock_subject" required class="form-select">
+                        <option value="">Выберите группу</option>
+                        {% for group in groups %}
+                            <option value="{{ group[0] }}">{{ group[0] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" name="action" value="confirm_sl" class="form-button add-button">
+                    <i class="fas fa-plus"></i> Подтвердить
+                </button>
+            </form>
+        </div>
+        <div class="admin-section">
+            <h3>Список слотов</h3>
+            <div class="data-table compact">
+                <table class="compact-table">
+                    <thead>
+                        <tr>
+                            <th>Группа</th>
+                            <th>Таблица</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group_name, group_data in locks.items() %}
+                        <tr>
+                            <td>{{ group_name }}</td>
+                            <td>
+                                <table class="schedule-table compact">
+                                    <thead>
+                                        <tr>
+                                            {% for day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'] %}
+                                                <th>{{ day }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            {% for day in ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'] %}
+                                                <td>
+                                                    {% set time_slots = [
+                                                        (1, '08:30 - 10:00'),
+                                                        (2, '10:10 - 11:40'),
+                                                        (3, '11:50 - 13:20'),
+                                                        (4, '14:05 - 15:35'),
+                                                        (5, '15:55 - 17:25'),
+                                                        (6, '17:35 - 19:05'),
+                                                        (7, '19:15 - 20:45')
+                                                    ] %}
+                                                    {% for slot_num, display_time in time_slots %}
+                                                        <div class="time-slot">
+                                                            <span class="time-label">{{ display_time }}</span>
+                                                            {% set day_data = group_data.get(day, {}) %}
+                                                            {% set slot_status = day_data.get(display_time, '') %}
+                                                            <div class="week-buttons">
+                                                                <button type="button"
+                                                                        class="week-btn odd {% if slot_status in ['odd', 'both'] %}active{% endif %}"
+                                                                        disabled>Чс</button>
+                                                                <button type="button"
+                                                                        class="week-btn even {% if slot_status in ['even', 'both'] %}active{% endif %}"
+                                                                        disabled>Зн</button>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Вкладка линковки -->
+    <div id="linking-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Создать соединенную пару</h3>
+            <div id="linking-hint"
+                style="font-size:18px;margin-top:6px;color:#cc0000;display:none;">
+                Выберите минимум 3 позиции суммарно (преподаватели + группы)
+            </div>
+            <form method="post" class="admin-form" id="linking-form">
+                <input type="hidden" name="active_tab" value="linking-tab">
+                <div class="form-grid-classroom">
+                    <div class="form-group-classroom">
+                        <label>Предмет</label>
+                        <select name="linking_subject" required class="form-select">
+                        {% for subj in subjects %}
+                            {% set val = subj[0] %}
+                            <option value="{{ val }}" {% if linking_remember and link_subject == val %}selected{% endif %}>
+                            {{ val }}
+                            </option>
+                        {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group-classroom">
+                        <label>Тип пары</label>
+                        <select name="linking_type_subject" required class="form-select">
+                        {% for t in ['Лекция','Семинар','Лабораторная работа'] %}
+                            <option value="{{ t }}" {% if linking_remember and link_type_subject == t %}selected{% endif %}>
+                            {{ t }}
+                            </option>
+                        {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group-classroom">
+                        <label>Преподаватели</label>
+                        <select name="linking_teachers" id="teachers-select" required multiple class="form-select">
+                            {% for teacher in peoples %}
+                            <option value="{{ teacher }}">{{ teacher }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group-classroom">
+                        <label>Группы</label>
+                        <select name="linking_groups" id="groups-select" required multiple class="form-select">
+                            {% for group in groups %}
+                            <option value="{{ group[0] }}">{{ group[0] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group-classroom form-button-container">
+                        <button type="submit" name="action" value="add_linking"
+                                id="add-linking-btn" class="form-button add-button">
+                            <i class="fas fa-plus"></i> Добавить
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+        <div class="admin-section">
+            <h3>Список соединенных пар</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>id пары</th>
+                        <th>Предмет</th>
+                        <th>Тип</th>
+                        <th>Преподаватели</th>
+                        <th>Группы</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for subj, type_subj, teachers, groups, id_para in linkings %}
+                    <tr>
+                        <td>{{ id_para }}</td>
+                        <td>{{ subj }}</td>
+                        <td>{{ type_subj }}</td>
+                        <td>
+                            {% if teachers is string %}
+                                {{ teachers }}
+                            {% else %}
+                                {{ teachers|join(', ') }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if groups is string %}
+                                {{ groups }}
+                            {% else %}
+                                {{ groups|join(', ') }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" style="display:inline;">
+                                <input type="hidden" name="active_tab" value="linking-tab">
+                                <input type="hidden" name="subj" value="{{ subj }}">
+                                <input type="hidden" name="type_subj" value="{{ type_subj }}">
+                                <input type="hidden" name="id_para" value="{{ id_para }}">
+                                <button type="submit" name="action" value="edit_linking" class="form-button" style="background-color: rgb(78, 185, 185); color: white;">
+                                    Редактировать
+                                </button>
+                            </form>
+                            <form method="post" style="display:inline;" onsubmit="return confirm('Удалить эту запись?');">
+                                <input type="hidden" name="active_tab" value="linking-tab">
+                                <input type="hidden" name="subj" value="{{ subj }}">
+                                <input type="hidden" name="type_subj" value="{{ type_subj }}">
+                                <input type="hidden" name="id_para" value="{{ id_para }}">
+                                <button type="submit" name="action" value="delete_linking" class="form-button" style="background-color: crimson; color: white;">
+                                    Удалить
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <div id="schedule-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <form method="post">
+                <input type="hidden" name="active_tab" value="schedule-tab">
+                <br>
+                <button type="submit" name="action" value="create_schedule" class="btn btn-warning">Создать расписание</button>
+                <br>
+                <br>
+                <button type="submit" name="action" value="schedule_browser" class="btn btn-primary">Посмотреть расписание в браузере</button>
+                <br>
+                <br>
+                <button type="submit" name="action" value="schedule_download" class="btn btn-success">Скачать расписание (Excel)</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<form method="POST">
+    <br>
+    <button type="submit" name="action" value="insert_table" class="form-button add-button">Заполнить статичными данными</button>
+    <br>
+    <button type="submit" name="action" value="drop_table" class="form-button delete-button">Очистить таблицы бд</button>
+    <h3>В проде две кнопки выше убрать! После нажатия кнопок перейти на 'Анкета' и затем в 'Админ Панель', тк ajaj обработки нет (костыль для анализа данных)</h3>
+</form>
+
+<script>
+    // ========== Основные функции админ-панели ==========
+    function openAdminTab(tabId, event) {
+        // Сохраняем активную вкладку в скрытом поле
+        document.querySelectorAll('input[name="active_tab"]').forEach(input => {
+            input.value = tabId;
+        });
+
+        // Остальной код функции остается прежним
+        document.querySelectorAll('.admin-tab-content').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(tabId).style.display = 'block';
+        if (event && event.currentTarget) {
+            event.currentTarget.classList.add('active');
+        }
+
+        // При переключении на вкладку часов инициализируем фильтрацию
+        if (tabId === 'hours-tab') {
+            initHoursFilter();
+        }
+    }
+
+    // Редактирование преподавателя
+    function editTeacher(id, name) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('modal-title').textContent = `Редактирование преподавателя #${id}`;
+        document.getElementById('edit-modal').style.display = 'block';
+    }
+
+    // Закрытие модального окна
+    document.querySelector('.close-button')?.addEventListener('click', function() {
+        document.getElementById('edit-modal').style.display = 'none';
+    });
+
+    // Закрытие при клике вне окна
+    window.addEventListener('click', function(event) {
+        if (event.target === document.getElementById('edit-modal')) {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+    });
+
+    // ========== Множественный выбор без Ctrl ==========
+ function initializeMultiSelects() {
+    const multiSelects = document.querySelectorAll("select[multiple]");
+
+    multiSelects.forEach((select) => {
+      // Сохраняем позицию скролла при изменении
+      let scrollPosition = 0;
+      let disabled = false;
+
+      select.addEventListener("mousedown", function (e) {
+        scrollPosition = this.scrollTop;
+        if (e.target.tagName === "OPTION") {
+          e.preventDefault();
+          e.target.selected = !e.target.selected;
+          const changeEvent = new Event("change");
+          select.dispatchEvent(changeEvent);
+          e.target.classList.toggle("selected", e.target.selected);
+          disabled = true;
+          // Восстанавливаем позицию скролла
+          setTimeout(() => {
+            this.scrollTop = scrollPosition;
+            disabled = false;
+          }, 0);
+        }
+      });
+
+      select.addEventListener("scroll", function () {
+        if (disabled) return;
+        scrollPosition = this.scrollTop;
+      });
+    });
+
+    // Добавляем стили для выбранных элементов
+    const style = document.createElement("style");
+    style.textContent = `
+            select[multiple] option.selected {
+                background-color: #4285f4;
+                color: white;
+            }
+            select[multiple] option:checked {
+                background-color: #4285f4;
+                color: white;
+            }
+        `;
+    document.head.appendChild(style);
+  }
+
+    // ========== Функции для фильтрации таблицы пар ==========
+    function initHoursFilter() {
+        const subjectSelect = document.getElementById('hours-subject-select');
+        const groupSelect = document.getElementById('hours-group-select');
+
+        if (subjectSelect && groupSelect) {
+            subjectSelect.addEventListener('change', filterHoursTable);
+            groupSelect.addEventListener('change', filterHoursTable);
+            filterHoursTable();
+        }
+    }
+
+    function filterHoursTable() {
+        const subject = document.getElementById('hours-subject-select')?.value || '';
+        const group = document.getElementById('hours-group-select')?.value || '';
+
+        fetch('filter_hours', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                subject: subject,
+                group: group
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            updateHoursTable(data.hours);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            updateHoursTable([]);
+        });
+    }
+
+    function updateHoursTable(hoursData) {
+        const tableBody = document.getElementById('hours-table-body');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = '';
+
+        if (hoursData && hoursData.length > 0) {
+            // Группируем данные по subject+group (должно быть по 2 записи на группу)
+            const groupedData = {};
+            hoursData.forEach(hour => {
+                const key = `${hour.subject}_${hour.group}`;
+                if (!groupedData[key]) {
+                    groupedData[key] = { subject: hour.subject, group: hour.group };
+                }
+                // Объединяем данные числителя и знаменателя
+                if (hour.seminar_odd > 0 || hour.lecture_odd > 0 || hour.lab_odd > 0) {
+                    groupedData[key].seminar_odd = hour.seminar_odd;
+                    groupedData[key].lecture_odd = hour.lecture_odd;
+                    groupedData[key].lab_odd = hour.lab_odd;
+                }
+                if (hour.seminar_even > 0 || hour.lecture_even > 0 || hour.lab_even > 0) {
+                    groupedData[key].seminar_even = hour.seminar_even;
+                    groupedData[key].lecture_even = hour.lecture_even;
+                    groupedData[key].lab_even = hour.lab_even;
+                }
+            });
+
+            Object.values(groupedData).forEach(hour => {
+                const row = document.createElement('tr');
+
+                // Колонка с предметом и кнопкой редактирования
+                const subjectCell = document.createElement('td');
+                subjectCell.innerHTML = `
+                    ${hour.subject}
+                    <form method="post">
+                        <button type="submit" name="action" value="redact_hours_${hour.subject}_${hour.group}" class="form-button bg-info">Редактировать</button>
+                    </form>
+                `;
+
+                // Колонка с группой
+                const groupCell = document.createElement('td');
+                groupCell.textContent = hour.group;
+
+                // Колонка с таблицей часов
+                const hoursCell = document.createElement('td');
+                hoursCell.innerHTML = `
+                    <table class="hours-table">
+                        <thead>
+                            <tr>
+                                <th class="table-header">Тип занятия</th>
+                                <th class="table-header">Количество пар в 2 недели</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="activity-type">Семинары</td>
+                                <td>${hour.seminar_odd || 0}</td>
+                            </tr>
+                            <tr>
+                                <td class="activity-type">Лекции</td>
+                                <td>${hour.lecture_odd || 0}</td>
+                            </tr>
+                            <tr>
+                                <td class="activity-type">Лаб. работы</td>
+                                <td>${hour.lab_odd || 0}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                `;
+
+                row.appendChild(subjectCell);
+                row.appendChild(groupCell);
+                row.appendChild(hoursCell);
+                tableBody.appendChild(row);
+            });
+        } else {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = 3;
+            cell.textContent = hoursData === null ? 'Загрузка данных...' : 'Нет данных для отображения по фильтру';
+            row.appendChild(cell);
+            tableBody.appendChild(row);
+        }
+    }
+
+    // Инициализация при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeMultiSelects();
+
+        document.addEventListener('submit', function(e) {
+            if (e.target.closest('#teachers-tab')) {
+                setTimeout(() => location.reload(), 500);
+            }
+        });
+        // Получаем активную вкладку из URL или параметра шаблона
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('active_tab') || '{{ active_tab }}' || 'teachers-tab';
+
+        // Скрываем все вкладки
+        document.querySelectorAll('.admin-tab-content').forEach(tab => {
+            tab.style.display = 'none';
+        });
+
+        // Показываем активную вкладку
+        const activeTabElement = document.getElementById(activeTab);
+        if (activeTabElement) {
+            activeTabElement.style.display = 'block';
+
+            // Если активная вкладка - часы, инициализируем фильтр
+            if (activeTab === 'hours-tab') {
+                initHoursFilter();
+            }
+        }
+
+        // Обновляем активную кнопку
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(activeTab)) {
+                btn.classList.add('active');
+            }
+
+        // При переключении на вкладку часов инициализируем фильтрацию
+        if (activeTab === 'hours-tab') {
+            initHoursFilter();
+        }
+
+        // Если страница загружена сразу на вкладке часов
+        if (window.location.hash === '#hours-tab') {
+            initHoursFilter();
+        }
+
+        });
+    });
+
+     // --- Ограничение на кнопку "Добавить" во вкладке линковки ---
+    document.addEventListener('DOMContentLoaded', function () {
+    const form   = document.getElementById('linking-form');
+    if (!form) return;
+
+    const tSel   = document.getElementById('teachers-select');
+    const gSel   = document.getElementById('groups-select');
+    const btn    = document.getElementById('add-linking-btn');
+    const hint   = document.getElementById('linking-hint');
+
+    function countSelected(selectEl) {
+        return Array.from(selectEl.options).filter(o => o.selected).length;
+    }
+
+    function validate() {
+        const total = countSelected(tSel) + countSelected(gSel);
+        const ok = total >= 3;
+        btn.disabled = !ok;
+        hint.style.display = ok ? 'none' : 'block';
+    }
+
+    tSel.addEventListener('change', validate);
+    gSel.addEventListener('change', validate);
+    form.addEventListener('submit', e => {
+        if (btn.disabled) {
+        e.preventDefault();
+        validate();
+        }
+    });
+
+    validate();
+    });
+
+
+</script>
+
+{% endblock %}

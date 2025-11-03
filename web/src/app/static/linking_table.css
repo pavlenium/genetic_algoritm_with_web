@@ -1,0 +1,114 @@
+/* Контейнер всей страницы */
+.linking-container {
+    padding: 30px;
+    max-width: 900px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Блок секции */
+.admin-section {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    margin-bottom: 30px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.admin-section h3 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* Сетка формы */
+.form-grid-classroom {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+/* Группы формы */
+.form-group-classroom {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group-classroom label {
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+}
+
+/* Стили селектов */
+.form-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    font-size: 14px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.25);
+}
+
+/* Для множественных селектов */
+.form-select[multiple] {
+    min-height: 120px;
+    padding: 8px;
+}
+
+/* Кнопка подтверждения */
+.confirm-button {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #28a745, #218838);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.confirm-button:hover {
+    background: linear-gradient(135deg, #218838, #28a745);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(33, 136, 56, 0.3);
+}
+
+/* Контейнер кнопки */
+.form-button-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+/* Анимация плавного появления */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .form-grid-classroom {
+        grid-template-columns: 1fr;
+    }
+
+    .confirm-button {
+        width: 100%;
+    }
+}

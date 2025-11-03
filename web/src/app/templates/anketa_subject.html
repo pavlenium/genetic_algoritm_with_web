@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block link_style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='anketa.css') }}">{% endblock %}
+
+{% block content %}
+<h1>Форма сбора данных</h1>
+<br>
+    {% block admin_content %}{% endblock %}
+    <form method="post">
+        <div class="section">
+            <h2 class="section-title">Выберите группы, с которыми вам предстоит работать в течение семестра по
+            по выбранному предмету</h2>
+            <br>
+            <h3>Семинары</h3>
+            <table class="data-table" id="colors-table_sem">
+                <thead>
+                    <tr>
+                        <th>1 Курс</th>
+                        <th>2 Курс</th>
+                        <th>3 Курс</th>
+                        <th>4 Курс</th>
+                        <th>5 Курс</th>
+                        <th>6 Курс</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% set courses = {
+                            '1': range(11, 20),
+                            '2': range(31, 40),
+                            '3': range(51, 60),
+                            '4': range(71, 80),
+                            '5': range(91, 100),
+                            '6': range(111, 120)
+                        } %}
+
+                        {% for course, numbers in courses.items() %}
+                        <td>
+                            {% for num in numbers %}
+                                {% set group_name = 'ИУ10-' ~ num %}
+                                {% if group_name in groups_list %}
+                                    {{ group_name }}
+                                    <input type="checkbox" id="sem_{{ num }}" name="sem_{{ group_name }}" value="{{ group_name }}">
+                                    <br>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <h3>Лекции</h3>
+            <table class="data-table" id="colors-table_lec">
+                <thead>
+                    <tr>
+                        <th>1 Курс</th>
+                        <th>2 Курс</th>
+                        <th>3 Курс</th>
+                        <th>4 Курс</th>
+                        <th>5 Курс</th>
+                        <th>6 Курс</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% set courses = {
+                            '1': range(11, 20),
+                            '2': range(31, 40),
+                            '3': range(51, 60),
+                            '4': range(71, 80),
+                            '5': range(91, 100),
+                            '6': range(111, 120)
+                        } %}
+
+                        {% for course, numbers in courses.items() %}
+                        <td>
+                            {% for num in numbers %}
+                                {% set group_name = 'ИУ10-' ~ num %}
+                                {% if group_name in groups_list %}
+                                    {{ group_name }}
+                                    <input type="checkbox" id="lec_{{ num }}" name="lec_{{ group_name }}" value="{{ group_name }}">
+                                    <br>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+            <br>
+            <h3>Лабораторные работы</h3>
+            <table class="data-table" id="colors-table_lab">
+                <thead>
+                    <tr>
+                        <th>1 Курс</th>
+                        <th>2 Курс</th>
+                        <th>3 Курс</th>
+                        <th>4 Курс</th>
+                        <th>5 Курс</th>
+                        <th>6 Курс</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% set courses = {
+                            '1': range(11, 20),
+                            '2': range(31, 40),
+                            '3': range(51, 60),
+                            '4': range(71, 80),
+                            '5': range(91, 100),
+                            '6': range(111, 120)
+                        } %}
+
+                        {% for course, numbers in courses.items() %}
+                        <td>
+                            {% for num in numbers %}
+                                {% set group_name = 'ИУ10-' ~ num %}
+                                {% if group_name in groups_list %}
+                                    {{ group_name }}
+                                    <input type="checkbox" id="lab_{{ num }}" name="lab_{{ group_name }}" value="{{ group_name }}">
+                                    <br>
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button type="submit" class="submit-btn">Сохранить данные по предмету</button>
+    </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Данные с бекенда
+        const backendData = {{ backend_data|tojson|safe }};
+        console.log("Received data:", backendData); // Для отладки
+
+        // Функция для отметки чекбоксов
+        function checkGroups(tableType, groups) {
+            if (!groups) return;
+
+            groups.forEach(group => {
+                const checkbox = document.querySelector(`input[name="${tableType}_${group}"]`);
+
+                if (checkbox) {
+                    checkbox.checked = true;
+                    console.log(`Checked: ${tableType}_${group}`); // Для отладки
+                } else {
+                    console.warn(`Checkbox not found: ${tableType}_${group}`); // Для отладки
+                }
+            });
+        }
+
+        // Отмечаем группы для каждого типа занятий
+        if (backendData) {
+            checkGroups('sem', backendData['семинар']);
+            checkGroups('lec', backendData['лекция']);
+            checkGroups('lab', backendData['лаба']);
+        } else {
+            console.warn("No backend data received");
+        }
+    });
+</script>
+{% endblock %}

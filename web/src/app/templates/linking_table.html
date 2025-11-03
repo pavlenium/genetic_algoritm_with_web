@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Редактирование соединённой пары{% endblock %}
+
+{% block link_style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='linking_table.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="linking-container">
+  <div class="admin-section">
+    <h3>Редактирование соединённой пары</h3>
+
+    <!-- Подсказка по минимуму 3 пунктов -->
+    <div id="edit-linking-hint"
+         style="font-size:18px;margin:8px 0 14px;color:#cc0000;display:none;">
+      Выберите минимум 3 позиции суммарно (преподаватели + группы)
+    </div>
+
+    <form method="post" class="admin-form" id="edit-linking-form">
+      <input type="hidden" name="active_tab" value="linking-tab">
+      {% for subj, type_subj, teachers, groups, id_para in table %}
+      <div class="form-grid-classroom">
+
+        <!-- Предмет -->
+        <div class="form-group-classroom">
+          <label>Предмет</label>
+          <select name="linking_subject" required class="form-select">
+            {% for s in subjects %}
+              {% set val = s[0] %}
+              <option value="{{ val }}" {% if subj == val %}selected{% endif %}>{{ val }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Тип пары -->
+        <div class="form-group-classroom">
+          <label>Тип пары</label>
+          <select name="linking_type_subject" required class="form-select">
+            {% for t in ['Лекция','Семинар','Лабораторная работа'] %}
+              <option value="{{ t }}" {% if type_subj == t %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Преподаватели -->
+        <div class="form-group-classroom">
+          <label>Преподаватели</label>
+          <select name="linking_teachers" id="edit-teachers-select" required multiple class="form-select">
+            {% for teacher in peoples %}
+              <option value="{{ teacher }}" {% if teacher in teachers %}selected{% endif %}>{{ teacher }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Группы -->
+        <div class="form-group-classroom">
+          <label>Группы</label>
+          <select name="linking_groups" id="edit-groups-select" required multiple class="form-select">
+            {% for group in groups_list %}
+              {% set g = group[0] %}
+              <option value="{{ g }}" {% if g in groups %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Кнопка -->
+        <div class="form-group-classroom form-button-container">
+          <button type="submit" name="action" value="confirm_edit_linking"
+                  id="confirm-edit-btn" class="confirm-button">
+            Подтвердить редактирование
+          </button>
+        </div>
+      </div>
+      {% endfor %}
+    </form>
+  </div>
+</div>
+
+<script>
+// === Множественный выбор без Ctrl ===
+function initializeMultiSelects() {
+  const multiSelects = document.querySelectorAll("select[multiple]");
+  multiSelects.forEach((select) => {
+    let scrollPosition = 0;
+    let disabled = false;
+    select.addEventListener("mousedown", function (e) {
+      scrollPosition = this.scrollTop;
+      if (e.target.tagName === "OPTION") {
+        e.preventDefault();
+        e.target.selected = !e.target.selected;
+        const changeEvent = new Event("change");
+        select.dispatchEvent(changeEvent);
+        e.target.classList.toggle("selected", e.target.selected);
+        disabled = true;
+        setTimeout(() => { this.scrollTop = scrollPosition; disabled = false; }, 0);
+      }
+    });
+    select.addEventListener("scroll", function () {
+      if (disabled) return; scrollPosition = this.scrollTop;
+    });
+  });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  initializeMultiSelects();
+
+  // Стили выбранных option
+  const style = document.createElement("style");
+  style.textContent = `
+    select[multiple] option.selected,
+    select[multiple] option:checked { background-color: #4285f4; color: #fff; }
+  `;
+  document.head.appendChild(style);
+
+  // --- Валидация: минимум 3 суммарно (преподаватели + группы)
+  const form  = document.getElementById('edit-linking-form');
+  const tSel  = document.getElementById('edit-teachers-select');
+  const gSel  = document.getElementById('edit-groups-select');
+  const btn   = document.getElementById('confirm-edit-btn');
+  const hint  = document.getElementById('edit-linking-hint');
+
+  function countSelected(sel) {
+    return Array.from(sel?.options || []).filter(o => o.selected).length;
+  }
+  function validate() {
+    const total = countSelected(tSel) + countSelected(gSel);
+    const ok = total >= 3;
+    btn.disabled = !ok;
+    hint.style.display = ok ? 'none' : 'block';
+  }
+
+  tSel.addEventListener('change', validate);
+  gSel.addEventListener('change', validate);
+  form.addEventListener('submit', (e) => {
+    if (btn.disabled) { e.preventDefault(); validate(); }
+  });
+
+  // первая проверка при загрузке (с уже отмеченными значениями)
+  validate();
+});
+</script>
+{% endblock %}

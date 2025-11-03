@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Навигация{% endblock %}
+
+{% block link_style %}<link rel="stylesheet" href="{{ url_for('static', filename='basic.css') }}">{% endblock %}
+
+{% block content %}
+<div class="hero-header">
+    <div class="header-content">
+        <h1 class="animated-title">
+            <span class="title-word title-word-1">Сайт</span>
+            <span class="title-word title-word-2">предназначен</span>
+            <span class="title-word title-word-3">для сбора</span>
+            <span class="title-word title-word-4">информации</span>
+            <span class="title-word title-word-5">о предпочтениях</span>
+            <span class="title-word title-word-6">преподавателей</span>
+            <span class="title-word title-word-7">и их работе</span>
+            <span class="title-word title-word-8">с группами</span>
+        </h1>
+        <div class="header-decoration"></div>
+    </div>
+</div>
+
+{% endblock %}
