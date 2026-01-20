@@ -9,113 +9,105 @@ from typing import List, Tuple
 
 from __init__ import SCHEDULE_FILENAME, SHEDULE_CREATION_LOCK
 from connector import DatabaseConnector
+from models import GeneticConfig, GeneticConfigModel
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-# Константы
-POPULATION_SIZE = 300
-GENERATIONS = 300
-ELITISM_RATE = 0.2
-SURVIVAL_RATE = 0.8
-
 CONFIG_FILENAME = "genetic_config.json"
 
-def load_config_from_file():
-    default_config = {
-        "population_size": 300,
-        "generations": 300,
-        "elitism_rate": 0.2,
-        "survival_rate": 0.8
-    }
+def get_data_from_db():
+    """Получение данных из базы данных"""
+    db = DatabaseConnector()
+    db.connect()
+    data = db.fetch_initial_data()
+    db.close()
+    return data
+
+def load_config_from_file() -> GeneticConfig:
+    default_config = GeneticConfig()
     
     try:
         if os.path.exists(CONFIG_FILENAME):
             with open(CONFIG_FILENAME, 'r', encoding='utf-8') as f:
                 saved_config = json.load(f)
-                for key in default_config:
-                    if key in saved_config:
-                        default_config[key] = saved_config[key]
+                return GeneticConfig(
+                    population_size=saved_config.get("population_size", default_config.population_size),
+                    generations=saved_config.get("generations", default_config.generations),
+                    elitism_rate=saved_config.get("elitism_rate", default_config.elitism_rate),
+                    survival_rate=saved_config.get("survival_rate", default_config.survival_rate)
+                )
     except Exception as e:
         logger.error(f"Ошибка при загрузке конфигурации: {e}")
     
     return default_config
 
-def save_config_to_file(config):
+def save_config_to_file(config: GeneticConfig) -> None:
     try:
         with open(CONFIG_FILENAME, 'w', encoding='utf-8') as f:
-            json.dump(config, f, ensure_ascii=False, indent=4)
+            json.dump({
+                "population_size": config.population_size,
+                "generations": config.generations,
+                "elitism_rate": config.elitism_rate,
+                "survival_rate": config.survival_rate
+            }, f, ensure_ascii=False, indent=4)
     except Exception as e:
         logger.error(f"Ошибка при сохранении конфигурации: {e}")
 
 # загрузка конфигурации при старте
-initial_config = load_config_from_file()
-POPULATION_SIZE = initial_config["population_size"]
-GENERATIONS = initial_config["generations"]
-ELITISM_RATE = initial_config["elitism_rate"]
-SURVIVAL_RATE = initial_config["survival_rate"]
+genetic_config = load_config_from_file()
 
-# функции для изменения констант
-def set_population_size(value: int):
-    global POPULATION_SIZE
+# функции для изменения конфигурации
+def set_population_size(value: int) -> None:
+    global genetic_config
     if 50 <= value <= 1000:
-        POPULATION_SIZE = value
-        # Сохраняем в файл
-        config = load_config_from_file()
-        config["population_size"] = value
-        save_config_to_file(config)
+        genetic_config.population_size = value
+        save_config_to_file(genetic_config)
         logger.info(f"POPULATION_SIZE изменен на {value}")
     else:
         raise ValueError("POPULATION_SIZE должен быть между 50 и 1000")
 
-def set_generations(value: int):
-    global GENERATIONS
+def set_generations(value: int) -> None:
+    global genetic_config
     if 50 <= value <= 1000:
-        GENERATIONS = value
-        config = load_config_from_file() #сохранение в файл
-        config["generations"] = value
-        save_config_to_file(config)
+        genetic_config.generations = value
+        save_config_to_file(genetic_config)
         logger.info(f"GENERATIONS изменен на {value}")
     else:
         raise ValueError("GENERATIONS должен быть между 50 и 1000")
 
-def set_elitism_rate(value: float):
-    global ELITISM_RATE
+def set_elitism_rate(value: float) -> None:
+    global genetic_config
     if 0.1 <= value <= 0.5:
-        ELITISM_RATE = value
-        config = load_config_from_file()
-        config["elitism_rate"] = value
-        save_config_to_file(config)
+        genetic_config.elitism_rate = value
+        save_config_to_file(genetic_config)
         logger.info(f"ELITISM_RATE изменен на {value}")
     else:
         raise ValueError("ELITISM_RATE должен быть между 0.1 и 0.5")
 
-def set_survival_rate(value: float):
-    global SURVIVAL_RATE
+def set_survival_rate(value: float) -> None:
+    global genetic_config
     if 0.5 <= value <= 0.95:
-        SURVIVAL_RATE = value
-        config = load_config_from_file()
-        config["survival_rate"] = value
-        save_config_to_file(config)
+        genetic_config.survival_rate = value
+        save_config_to_file(genetic_config)
         logger.info(f"SURVIVAL_RATE изменен на {value}")
     else:
         raise ValueError("SURVIVAL_RATE должен быть между 0.5 и 0.95")
 
-def get_current_config():
-    return {
-        "population_size": POPULATION_SIZE,
-        "generations": GENERATIONS,
-        "elitism_rate": ELITISM_RATE,
-        "survival_rate": SURVIVAL_RATE
-    }
+def get_current_config() -> GeneticConfigModel:
+    global genetic_config
+    return genetic_config.to_model()
 
+def update_genetic_config(new_config: GeneticConfigModel) -> None:
+    global genetic_config
+    genetic_config = GeneticConfig.from_model(new_config)
+    save_config_to_file(genetic_config)
 
 DAYS_WEEK_EVEN = [d + "_ч" for d in ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]]
 DAYS_WEEK_ODD = [d + "_з" for d in ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота"]]
 DAYS_OF_WEEK = DAYS_WEEK_EVEN + DAYS_WEEK_ODD
 
-# Типы данных
 Group = str
 Subject = str
 Teacher = str
@@ -125,16 +117,82 @@ DayOfWeek = str
 Gene = List  # [Teacher, LessonSlot, Group, Subject, LessonType, DayOfWeek]
 Schedule = List[Gene]
 
-def get_data_from_db():
-    db = DatabaseConnector()
-    db.connect()
-    data = db.fetch_initial_data()
-    db.close()
-    return data
-
 def generate_random_schedule() -> Schedule:
     schedule = []
+    processed_id_paras = set()
+
+    # Сначала обрабатываем связанные группы
+    for id_para, group_info_list in linked_groups_by_id_para.items():
+        if id_para in processed_id_paras:
+            continue
+
+        # Берем первую группу из списка, чтобы взять общие параметры
+        first_group_info = group_info_list[0]
+        group_name = first_group_info["group"]
+        subject = first_group_info["subject"]
+        lesson_type = first_group_info["lesson_type"]
+        teacher = first_group_info["teacher"]
+
+        # Проверяем, что учитель может вести этот предмет
+        if subject not in teacher_subjects.get(teacher, []):
+            # Если нет — ищем другого учителя
+            available_teachers = [t for t, subjs in teacher_subjects.items() if subject in subjs]
+            if not available_teachers:
+                raise ValueError(f"Нет доступных учителей по предмету {subject} для поточной лекции")
+            teacher = random.choice(available_teachers)
+
+        # Генерируем общий слот для всех групп
+        day = random.choice(DAYS_OF_WEEK)
+        slot = random.choice(lesson_slots)
+
+        # Проверяем доступность учителя
+        slot_time = slot if isinstance(slot, str) else slot[0]
+        if f"{day}|{slot_time}" not in teacher_availability.get(teacher, set()):
+            # Ищем другой слот
+            available_slots = [
+                s for s in lesson_slots
+                if f"{day}|{s if isinstance(s, str) else s[0]}" in teacher_availability.get(teacher, set())
+            ]
+            if available_slots:
+                slot = random.choice(available_slots)
+            else:
+                # Ищем другой день
+                available_days = [
+                    d for d in DAYS_OF_WEEK
+                    if f"{d}|{slot_time}" in teacher_availability.get(teacher, set())
+                ]
+                if available_days:
+                    day = random.choice(available_days)
+                else:
+                    # Fallback — любой слот
+                    slot = random.choice(lesson_slots)
+                    day = random.choice(DAYS_OF_WEEK)
+
+        # Создаём записи для всех групп в этом id_para
+        for info in group_info_list:
+            group = info["group"]
+            gene = [
+                teacher,
+                slot,
+                group,
+                subject,
+                lesson_type,
+                day,
+            ]
+            schedule.append(gene)
+
+        processed_id_paras.add(id_para)
+
+    # Теперь обрабатываем остальные (не связанные) группы
     for (group, subject, lesson_type_key), count in group_subject_requirements.items():
+        # Пропускаем группы, которые уже обработаны через linked_groups_by_id_para
+        is_linked = any(
+            group in [g["group"] for g in group_info_list]
+            for group_info_list in linked_groups_by_id_para.values()
+        )
+        if is_linked:
+            continue
+
         available_teachers = [t for t, subjs in teacher_subjects.items() if subject in subjs]
         if not available_teachers:
             raise ValueError(f"Нет доступных учителей по предмету {subject}")
@@ -146,10 +204,11 @@ def generate_random_schedule() -> Schedule:
                 random.choice(lesson_slots),
                 group,
                 subject,
-                lesson_type_key,  
+                lesson_type_key,
                 random.choice(DAYS_OF_WEEK),
             ]
             schedule.append(gene)
+
     return schedule
 
 def calculate_fitness(schedule: Schedule) -> int:
@@ -157,6 +216,39 @@ def calculate_fitness(schedule: Schedule) -> int:
         return -1_000_000
 
     hard_constraints_violations = 0
+
+    # Проверка поточных лекций
+    for id_para, group_info_list in linked_groups_by_id_para.items():
+        if len(group_info_list) < 2:
+            continue
+
+        # Получаем первые значения для сравнения
+        first_group = group_info_list[0]["group"]
+        first_gene = None
+        for gene in schedule:
+            if gene[2] == first_group:  # group
+                first_gene = gene
+                break
+
+        if not first_gene:
+            hard_constraints_violations += 1000  # очень серьёзное нарушение
+            continue
+
+        teacher_ref, slot_ref, _, _, _, day_ref = first_gene
+
+        # Проверяем все остальные группы в этом id_para
+        for info in group_info_list[1:]:
+            group = info["group"]
+            found = False
+            for gene in schedule:
+                if gene[2] == group:
+                    t, s, g, subj, lt, d = gene
+                    if t != teacher_ref or s != slot_ref or d != day_ref:
+                        hard_constraints_violations += 1000  # нарушение поточности
+                    found = True
+                    break
+            if not found:
+                hard_constraints_violations += 1000
 
     for day in DAYS_OF_WEEK:
         day_schedule = [gene for gene in schedule if gene[5] == day]
@@ -198,7 +290,7 @@ def crossover(parent1: Schedule, parent2: Schedule) -> Schedule:
     child = []
     for gene in parent1:
         teacher, lesson_slot, group, subject, lesson_type, day = gene
- 
+
         teacher_conflict = any(
             t == teacher and l == lesson_slot and d == day
             for t, l, g, s, lt, d in child
@@ -215,7 +307,7 @@ def crossover(parent1: Schedule, parent2: Schedule) -> Schedule:
                 child.append(gene)
                 continue
 
-        # ели конфликт или недоступность, то ищем альтернативу в parent2
+        # если конфликт или недоступность, то ищем альтернативу в parent2
         alternatives = [
             g for g in parent2
             if g[2] == group and g[3] == subject and g[4] == lesson_type
@@ -246,6 +338,49 @@ def crossover(parent1: Schedule, parent2: Schedule) -> Schedule:
         else:
             child.append(gene)  # fallback
 
+    # После того, как child создан, проверяем связанные группы
+    child_groups = set(gene[2] for gene in child)
+
+    for id_para, group_info_list in linked_groups_by_id_para.items():
+        group_names = [g["group"] for g in group_info_list]
+        present_groups = [g for g in group_names if g in child_groups]
+
+        if len(present_groups) == 0:
+            continue
+
+        # Берём первую группу из present_groups и её параметры
+        first_group = present_groups[0]
+        first_gene = next(gene for gene in child if gene[2] == first_group)
+        teacher_ref, slot_ref, _, _, _, day_ref = first_gene
+
+        # Для всех остальных групп в этом id_para — приводим к тем же параметрам
+        for group_name in group_names:
+            if group_name in child_groups:
+                continue  # уже есть
+
+            # Ищем в child запись для этой группы — если есть, заменяем
+            for i, gene in enumerate(child):
+                if gene[2] == group_name:
+                    child[i] = [
+                        teacher_ref,
+                        slot_ref,
+                        group_name,
+                        gene[3],  # subject
+                        gene[4],  # lesson_type
+                        day_ref,
+                    ]
+                    break
+            else:
+                # Если нет — добавляем новую запись
+                child.append([
+                    teacher_ref,
+                    slot_ref,
+                    group_name,
+                    group_info_list[0]["subject"],
+                    group_info_list[0]["lesson_type"],
+                    day_ref,
+                ])
+
     return child
 
 
@@ -253,71 +388,145 @@ def mutate(schedule: Schedule) -> Schedule:
     idx = random.randint(0, len(schedule) - 1)
     teacher, lesson_slot, group, subject, lesson_type, day = schedule[idx]
 
-    teacher_conflict = (
-        sum(1 for t, l, g, s, lt, d in schedule if t == teacher and l == lesson_slot and d == day) != 1
-    )
-    group_conflict = (
-        sum(1 for t, l, g, s, lt, d in schedule if g == group and l == lesson_slot and d == day) != 1
-    )
+    # Проверяем, принадлежит ли эта группа к связанному id_para
+    linked_id_para = None
+    for id_para, group_info_list in linked_groups_by_id_para.items():
+        if any(g["group"] == group for g in group_info_list):
+            linked_id_para = id_para
+            break
 
-    if not teacher_conflict and not group_conflict:
-        return schedule
+    if linked_id_para:
+        # Мутация затрагивает все группы в этом id_para
+        group_names = [g["group"] for g in linked_groups_by_id_para[linked_id_para]]
 
-    mutation_type = random.random()
+        # Выбираем тип мутации
+        mutation_type = random.random()
 
-    if mutation_type < 0.4:
-        lesson_type_key = lesson_type
-
-        #те, кто ведёт этот предмет и доступен в это время
-        slot_time = lesson_slot if isinstance(lesson_slot, str) else lesson_slot[0]
-        available_teachers = [
-            t for t, subjs in teacher_subjects.items()
-            if subject in subjs and f"{day}|{slot_time}" in teacher_availability.get(t, set())
-        ]
-
-        if available_teachers:
-            schedule[idx][0] = random.choice(available_teachers)
-
-    elif mutation_type < 0.8:
-        group_lessons = {l for t, l, g, s, lt, d in schedule if g == group and d == day}
-        available_slots = [l for l in lesson_slots if l not in group_lessons]
-
-        if available_slots:
-            possible_slots = [
-                s for s in available_slots
-                if f"{day}|{s if isinstance(s, str) else s[0]}" in teacher_availability.get(teacher, set())
+        if mutation_type < 0.4:
+            # Меняем преподавателя — для всех групп
+            available_teachers = [
+                t for t, subjs in teacher_subjects.items()
+                if subject in subjs and f"{day}|{lesson_slot if isinstance(lesson_slot, str) else lesson_slot[0]}" in teacher_availability.get(t, set())
             ]
-            if possible_slots:
-                schedule[idx][1] = random.choice(possible_slots)
+            if available_teachers:
+                new_teacher = random.choice(available_teachers)
+                for i, gene in enumerate(schedule):
+                    if gene[2] in group_names:
+                        schedule[i][0] = new_teacher
+
+        elif mutation_type < 0.8:
+            # Меняем слот — для всех групп
+            group_lessons = {l for t, l, g, s, lt, d in schedule if g in group_names and d == day}
+            available_slots = [l for l in lesson_slots if l not in group_lessons]
+
+            if available_slots:
+                possible_slots = [
+                    s for s in available_slots
+                    if f"{day}|{s if isinstance(s, str) else s[0]}" in teacher_availability.get(teacher, set())
+                ]
+                if possible_slots:
+                    new_slot = random.choice(possible_slots)
+                else:
+                    new_slot = random.choice(available_slots)
             else:
-                schedule[idx][1] = random.choice(available_slots)
+                possible_slots = [
+                    s for s in lesson_slots
+                    if f"{day}|{s if isinstance(s, str) else s[0]}" in teacher_availability.get(teacher, set())
+                ]
+                if possible_slots:
+                    new_slot = random.choice(possible_slots)
+                else:
+                    new_slot = random.choice(lesson_slots)
+
+            for i, gene in enumerate(schedule):
+                if gene[2] in group_names:
+                    schedule[i][1] = new_slot
+
         else:
-            possible_slots = [
-                s for s in lesson_slots
-                if f"{day}|{s if isinstance(s, str) else s[0]}" in teacher_availability.get(teacher, set())
-            ]
-            if possible_slots:
-                schedule[idx][1] = random.choice(possible_slots)
-            else:
-                schedule[idx][1] = random.choice(lesson_slots)
+            # Меняем день — для всех групп
+            group_days = [d for t, l, g, s, lt, d in schedule if g in group_names]
+            day_counts = {d: group_days.count(d) for d in DAYS_OF_WEEK}
+            min_cnt = min(day_counts.values()) if day_counts else 0
+            least_busy_days = [d for d, cnt in day_counts.items() if cnt == min_cnt]
+
+            slot_time = lesson_slot if isinstance(lesson_slot, str) else lesson_slot[0]
+            available_days = [
+                d for d in least_busy_days
+                if f"{d}|{slot_time}" in teacher_availability.get(teacher, set())
+            ] or [
+                d for d in DAYS_OF_WEEK
+                if f"{d}|{slot_time}" in teacher_availability.get(teacher, set())
+            ] or least_busy_days
+
+            new_day = random.choice(available_days)
+
+            for i, gene in enumerate(schedule):
+                if gene[2] in group_names:
+                    schedule[i][5] = new_day
 
     else:
-        # подобрать наименее занятый день, но среди доступных для этого преподавателя/слота
-        group_days = [d for t, l, g, s, lt, d in schedule if g == group]
-        day_counts = {d: group_days.count(d) for d in DAYS_OF_WEEK}
-        min_cnt = min(day_counts.values()) if day_counts else 0
-        least_busy_days = [d for d, cnt in day_counts.items() if cnt == min_cnt]
+        # Обычная мутация — как раньше
+        teacher_conflict = (
+            sum(1 for t, l, g, s, lt, d in schedule if t == teacher and l == lesson_slot and d == day) != 1
+        )
+        group_conflict = (
+            sum(1 for t, l, g, s, lt, d in schedule if g == group and l == lesson_slot and d == day) != 1
+        )
 
-        slot_time = lesson_slot if isinstance(lesson_slot, str) else lesson_slot[0]
-        available_days = [
-            d for d in least_busy_days
-            if f"{d}|{slot_time}" in teacher_availability.get(teacher, set())
-        ] or [
-            d for d in DAYS_OF_WEEK
-            if f"{d}|{slot_time}" in teacher_availability.get(teacher, set())
-        ] or least_busy_days  # если совсем нет доступных — сохраняем старую логику
+        if not teacher_conflict and not group_conflict:
+            return schedule
 
-        schedule[idx][5] = random.choice(available_days)
+        mutation_type = random.random()
+
+        if mutation_type < 0.4:
+            slot_time = lesson_slot if isinstance(lesson_slot, str) else lesson_slot[0]
+            available_teachers = [
+                t for t, subjs in teacher_subjects.items()
+                if subject in subjs and f"{day}|{slot_time}" in teacher_availability.get(t, set())
+            ]
+
+            if available_teachers:
+                schedule[idx][0] = random.choice(available_teachers)
+
+        elif mutation_type < 0.8:
+            group_lessons = {l for t, l, g, s, lt, d in schedule if g == group and d == day}
+            available_slots = [l for l in lesson_slots if l not in group_lessons]
+
+            if available_slots:
+                possible_slots = [
+                    s for s in available_slots
+                    if f"{day}|{s if isinstance(s, str) else s[0]}" in teacher_availability.get(teacher, set())
+                ]
+                if possible_slots:
+                    schedule[idx][1] = random.choice(possible_slots)
+                else:
+                    schedule[idx][1] = random.choice(available_slots)
+            else:
+                possible_slots = [
+                    s for s in lesson_slots
+                    if f"{day}|{s if isinstance(s, str) else s[0]}" in teacher_availability.get(teacher, set())
+                ]
+                if possible_slots:
+                    schedule[idx][1] = random.choice(possible_slots)
+                else:
+                    schedule[idx][1] = random.choice(lesson_slots)
+
+        else:
+            group_days = [d for t, l, g, s, lt, d in schedule if g == group]
+            day_counts = {d: group_days.count(d) for d in DAYS_OF_WEEK}
+            min_cnt = min(day_counts.values()) if day_counts else 0
+            least_busy_days = [d for d, cnt in day_counts.items() if cnt == min_cnt]
+
+            slot_time = lesson_slot if isinstance(lesson_slot, str) else lesson_slot[0]
+            available_days = [
+                d for d in least_busy_days
+                if f"{d}|{slot_time}" in teacher_availability.get(teacher, set())
+            ] or [
+                d for d in DAYS_OF_WEEK
+                if f"{d}|{slot_time}" in teacher_availability.get(teacher, set())
+            ] or least_busy_days
+
+            schedule[idx][5] = random.choice(available_days)
 
     return schedule
 
@@ -337,6 +546,7 @@ def select_parent(ranked_population: List[Tuple[int, Schedule]]) -> Schedule:
 def genetic_algorithm() -> Schedule:
     global lesson_slots, groups, subjects, teachers, classrooms
     global group_subject_requirements, teacher_subjects, lesson_types, lock_slot, teacher_availability
+    global linked_groups_by_id_para  # <-- НОВОЕ
 
     db_data = get_data_from_db()
 
@@ -350,14 +560,16 @@ def genetic_algorithm() -> Schedule:
     lesson_types = db_data["lesson_types"]
     lock_slot = db_data["lock_slots"]
     teacher_availability = db_data["teacher_availability"]
+    linked_groups_by_id_para = db_data.get("linked_groups_by_id_para", {})  # <-- НОВОЕ
 
-    population = [generate_random_schedule() for _ in range(POPULATION_SIZE)]
+    # Используем конфигурацию вместо глобальных констант
+    population = [generate_random_schedule() for _ in range(genetic_config.population_size)]
 
-    for generation in range(GENERATIONS):
+    for generation in range(genetic_config.generations):
         ranked = sorted([(calculate_fitness(ind), ind) for ind in population], reverse=True)
 
-        elite = ranked[: int(POPULATION_SIZE * ELITISM_RATE)]
-        survivors = ranked[: int(POPULATION_SIZE * SURVIVAL_RATE)]
+        elite = ranked[: int(genetic_config.population_size * genetic_config.elitism_rate)]
+        survivors = ranked[: int(genetic_config.population_size * genetic_config.survival_rate)]
 
         best_fitness, best_schedule = max(ranked, key=lambda x: x[0])
         logger.debug(f"Поколение {generation}, Лучший балл: {best_fitness}")
@@ -368,7 +580,7 @@ def genetic_algorithm() -> Schedule:
 
         new_generation = [ind for (fit, ind) in elite]
 
-        while len(new_generation) < POPULATION_SIZE:
+        while len(new_generation) < genetic_config.population_size:
             parent1 = select_parent(survivors)
             parent2 = select_parent(survivors)
             child = crossover(parent1, parent2)
@@ -423,7 +635,6 @@ def schedule_to_dict(schedule: Schedule, generated_at: str, metadata: dict) -> d
                 continue
 
             locked_slots_processed.add(slot_key)
-
 
             if group not in schedule_dict["schedule"]:
                 schedule_dict["schedule"][group] = {}

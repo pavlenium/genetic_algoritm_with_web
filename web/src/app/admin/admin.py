@@ -40,6 +40,7 @@ def admin_pas():
 def choice():
     connect = Connect()
     peoples = connect.select_teachers()
+    body_classroom = connect.select_body_classroom()
     linking_remember=False
     active_tab = request.args.get("active_tab") or request.form.get("active_tab", "teachers-tab")
     flag_hours = False
@@ -183,6 +184,22 @@ def choice():
         elif action == "confirm_sl":
             subject = request.form.get("lock_subject")
             return redirect(f"/admin/lock/{subject}")
+        
+        elif action.startswith("edit_lock_"):
+            group = action.split("_")[2]
+            return redirect(url_for("admin.lock_table", group=group))
+        
+        elif action.startswith('delete_lock_'):
+            group = action.split("_")[2]
+            connect.delete_from_table("lock_slot", "group_name", [group])
+            return redirect(url_for("admin.choice", active_tab="lock-slot-tab"))
+
+        elif action == "confirm_anketa_teach_subj":
+            teacher = request.form.get("anketa-sel-teach")
+            subject = request.form.get("anketa-sel-subj")
+            id_teacher = connect.select_id_table_name("teachers", teacher)
+            id_subject = connect.select_id_table_name('subjects', subject)
+            return redirect(f'/admin/{id_teacher}/{id_subject}')
 
         elif action == "insert_table":
             connect.create_tables()  # if not exists
@@ -217,7 +234,7 @@ def choice():
             type_subj = request.form.get("type_subj")
             id_para = request.form.get("id_para")
             connect.delete_linking_stroke(subj, type_subj, int(id_para))
-            connect.linking_edit_id_para()
+            # connect.linking_edit_id_para()
             return redirect(url_for("admin.choice", active_tab="linking-tab"))
 
         elif action == "schedule_browser":
@@ -242,7 +259,6 @@ def choice():
     # print(hours)
     subjects = connect.select_all_subjects()
     classrooms = connect.select_all_classrooms()
-    body_classroom = connect.select_body_classroom()
     properties = connect.select_property()
     groups = connect.select_groups()
     locks = connect.select_locks()
@@ -365,7 +381,6 @@ def linking_table(subject: str, type_subject: str, id_para: str):
             link_type_subject = request.form.get("linking_type_subject")
             teachers = request.form.getlist("linking_teachers")
             groups = request.form.getlist("linking_groups")
-            # print(f'TEACFHERS: {teachers}\n\n\n\n\n{groups}')
             connect.update_linking(subject, type_subject, link_subject, link_type_subject, teachers, groups, id_para)
             return redirect(url_for("admin.choice", active_tab=active_tab))
 
@@ -403,12 +418,14 @@ def hours_table(subject: str, group: str):
                            group=group)
 
 
-@admin_router.route("/lock/<subject>", methods=["POST", "GET"])
-def lock_table(subject: str):
+@admin_router.route("/lock/<group>", methods=["POST", "GET"])
+def lock_table(group: str):
     connect = Connect()
-    table = connect.select_lock(subject)
+    table = connect.select_lock(group)
+    body_classroom = connect.select_body_classroom()
     if request.method == "POST":
         action = request.form.get("action")
+        body=request.form.get("lock_redact_body")
         if action == "add_lock_subj":
             active_tab = request.form.get("active_tab", "lock-slot-tab")
             schedule = {
@@ -445,12 +462,17 @@ def lock_table(subject: str):
                         schedule[time_mapping[day_num]][time_slot] = "both"
                     else:
                         schedule[time_mapping[day_num]][time_slot] = "even"
-            connect.insert_lock_table(schedule, subject)
+            connect.insert_lock_table(schedule, group, body)
             # print(schedule)
             return redirect(url_for("admin.choice", active_tab=active_tab))
     # print(table)
+    locks = connect.select_locks()
+    body = (locks.get(group) or {}).get("body", "B7")
     return render_template("lock_table.html",
-                           scheduleData=table
+                           scheduleData=table,
+                           body_classroom=body_classroom,
+                           body=body,
+                           group=group
                            )
 
 
@@ -526,7 +548,7 @@ def anketa():
     selected_times = connect.select_teacher_time(user)
     times = connect.select_times()
     times_slots = []
-    for i, g in enumerate(times):
+    for i, g in enumerate(times, 1):
         times_slots.append((i, g))
     # print(selected_times)
     subjects = []
@@ -544,11 +566,53 @@ def anketa():
                            )
 
 
-@admin_router.route("/subject/<int:subject_id>", methods=["GET", "POST"])
-def set_groups_to_subject(subject_id: int):
+# @admin_router.route("/subject/<int:subject_id>", methods=["GET", "POST"])
+# def set_groups_to_subject(subject_id: int):
+#     connect = Connect()
+#     user = session.get("selected_teacher")
+#     subjects_list = connect.select_subjects()
+#     groups = connect.select_groups()
+#     subject_list: list[str] = connect.select_subjects()
+#     if request.method == "POST":
+#         result = {
+#             "table_sem": [],
+#             "table_lec": [],
+#             "table_lab": []
+#         }
+#         for key, value in request.form.items():
+#             if key.startswith("sem_"):
+#                 result["table_sem"].append(value)
+#             if key.startswith("lec_"):
+#                 result["table_lec"].append(value)
+#             if key.startswith("lab_"):
+#                 result["table_lab"].append(value)
+#         final_result = {user: {subjects_list[subject_id - 1]: result}}
+#         connect.insert_teacher_group_subject_ls(final_result)
+#         return redirect("/admin/settings")
+
+#     if len(subject_list) < subject_id:
+#         return redirect("/admin/settings")
+#     subject = subject_list[subject_id - 1]
+#     data_tgsl = connect.select_teacher_group_subject_ls(user)
+#     if user in data_tgsl and subject in data_tgsl[user]:
+#         data_tgsl = connect.select_teacher_group_subject_ls(user)[user][subject]
+#     # print(data_tgsl)
+#     # print('13123', subject)
+#     return render_template("anketa_subject.html",
+#                            title=f"Предмет - {subject}",
+#                            groups_list=groups,
+#                            backend_data=data_tgsl,
+#                            user=user
+#                            )
+
+
+@admin_router.route("/<int:teacher_id>/<int:subject_id>", methods=["GET", "POST"])
+def anketa_tsg(teacher_id: int, subject_id: int):
     connect = Connect()
-    user = session.get("selected_teacher")
-    subjects_list = connect.select_subjects()
+    user = connect.select_name_from_table_where_id("teachers", teacher_id)
+    # subjects_list = connect.select_subjects()
+    subject = connect.select_name_by_id('subjects', subject_id)
+    # print(subject)
     groups = connect.select_groups()
     subject_list: list[str] = connect.select_subjects()
     if request.method == "POST":
@@ -564,21 +628,20 @@ def set_groups_to_subject(subject_id: int):
                 result["table_lec"].append(value)
             if key.startswith("lab_"):
                 result["table_lab"].append(value)
-        final_result = {user: {subjects_list[subject_id - 1]: result}}
+        final_result = {user: {subject: result}}
         connect.insert_teacher_group_subject_ls(final_result)
-        return redirect("/admin/settings")
+        return redirect(url_for("admin.choice", active_tab="anketa-tab"))
 
-    if len(subject_list) < subject_id:
-        return redirect("/admin/settings")
-    subject = subject_list[subject_id - 1]
+    if len(subject_list)<subject_id:
+        return redirect(url_for("admin.choice", active_tab="anketa-tab"))
+    # print(user)
+    subject = subject_list[subject_id-1]
     data_tgsl = connect.select_teacher_group_subject_ls(user)
     if user in data_tgsl and subject in data_tgsl[user]:
         data_tgsl = connect.select_teacher_group_subject_ls(user)[user][subject]
-    # print(data_tgsl)
-    # print('13123', subject)
     return render_template("anketa_subject.html",
-                           title=f"Предмет - {subject}",
-                           groups_list=groups,
-                           backend_data=data_tgsl,
-                           user=user
-                           )
+                            title=f"Предмет - {subject}",
+                            groups_list=groups,
+                            backend_data=data_tgsl,
+                            user=user
+                            )

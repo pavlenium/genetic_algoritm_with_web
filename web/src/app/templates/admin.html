@@ -40,6 +40,7 @@
         <button class="tab-button" onclick="openAdminTab('subjects-tab', event)">Предметы</button>
         <button class="tab-button" onclick="openAdminTab('properties-tab', event)">Свойства</button>
         <button class="tab-button" onclick="openAdminTab('hours-tab', event)">Часы</button>
+        <button class="tab-button" onclick="openAdminTab('anketa-tab', event)">Анкета</button>
         <button class="tab-button" onclick="openAdminTab('lock-slot-tab', event)">Блокировка слотов</button>
         <button class="tab-button" onclick="openAdminTab('linking-tab', event)">Линковка пар</button>
         <button class="tab-button" onclick="openAdminTab('schedule-tab', event)">Расписание</button>
@@ -452,6 +453,80 @@
         </div>
     </div>
 
+    <!-- anketa-tab -->
+    <div id="anketa-tab" class="admin-tab-content">
+        <div class="admin-section">
+            <h3>Указать соотношение преподаватель – предмет – группы</h3>
+
+            <form method="POST" class="admin-form" id="anketa-sel-teach-subj">
+                <input type="hidden" name="active_tab" value="anketa-tab">
+
+                <div class="form-row" style="display:flex;gap:20px;flex-wrap:wrap;">
+
+                    <!-- ======== ПРЕПОДАВАТЕЛЬ ======== -->
+                    <div class="form-group" style="flex:1;min-width:280px;position:relative;">
+                        <input type="text"
+                            id="anketa-teacher-search"
+                            class="form-input"
+                            autocomplete="off"
+                            placeholder="Начните вводить ФИО преподавателя">
+
+                        <!-- Скрытый селект для отправки формы -->
+                        <select name="anketa-sel-teach"
+                                id="anketa-sel-teach"
+                                class="form-select"
+                                style="display:none;"
+                                required>
+                            <option value="">Выберите преподавателя</option>
+                            {% for teacher in peoples %}
+                                <option value="{{ teacher }}">{{ teacher }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- Список подсказок -->
+                        <div id="anketa-teacher-list"
+                            class="autocomplete-list"></div>
+                    </div>
+
+                    <!-- ======== ПРЕДМЕТ ======== -->
+                    <div class="form-group" style="flex:1;min-width:280px;position:relative;">
+                        <input type="text"
+                            id="anketa-subject-search"
+                            class="form-input"
+                            autocomplete="off"
+                            placeholder="Начните вводить название предмета">
+
+                        <!-- Скрытый селект для отправки формы -->
+                        <select name="anketa-sel-subj"
+                                id="anketa-sel-subj"
+                                class="form-select"
+                                style="display:none;"
+                                required>
+                            <option value="">Выберите предмет</option>
+                            {% for subject in subjects %}
+                                <option value="{{ subject[0] }}">{{ subject[0] }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <!-- Список подсказок -->
+                        <div id="anketa-subject-list"
+                            class="autocomplete-list"></div>
+                    </div>
+
+                </div>
+
+                <button type="submit"
+                        name="action"
+                        value="confirm_anketa_teach_subj"
+                        class="form-button add-button">
+                    <i class="fas fa-plus"></i> Подтвердить
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+
 <!--    lock-slot-tab-->
     <div id="lock-slot-tab" class="admin-tab-content">
         <div class="admin-section">
@@ -479,12 +554,25 @@
                         <tr>
                             <th>Группа</th>
                             <th>Таблица</th>
+                            <th>Корпус</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for group_name, group_data in locks.items() %}
                         <tr>
-                            <td>{{ group_name }}</td>
+                            <td>
+                                {{ group_name }}
+                                <form method="post" class="edit-lock-form">
+                                    <input type="hidden" name="active_tab" value="lock-slot-tab">
+                                    <input type="hidden" name="group_name" value="{{ group_name }}">
+                                    <button type="submit" name="action" value="edit_lock_{{ group_name }}" class="form-button bg-info">Редактировать</button>
+                                </button>
+                                <button type="submit" name="action" value="delete_lock_{{ group_name }}" class="form-button" style="background-color: crimson; color: white;">
+                                    Удалить
+                                </button>
+                            </form>
+                            </td>
+
                             <td>
                                 <table class="schedule-table compact">
                                     <thead>
@@ -508,10 +596,10 @@
                                                         (7, '19:15 - 20:45')
                                                     ] %}
                                                     {% for slot_num, display_time in time_slots %}
-                                                        <div class="time-slot">
+                                                        {% set day_data = group_data.get(day, {}) %}
+                                                        {% set slot_status = day_data.get(display_time, '') %}
+                                                        <div class="time-slot {% if slot_status %}slot-active{% endif %}">
                                                             <span class="time-label">{{ display_time }}</span>
-                                                            {% set day_data = group_data.get(day, {}) %}
-                                                            {% set slot_status = day_data.get(display_time, '') %}
                                                             <div class="week-buttons">
                                                                 <button type="button"
                                                                         class="week-btn odd {% if slot_status in ['odd', 'both'] %}active{% endif %}"
@@ -527,6 +615,9 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </td>
+                            <td>
+                                {{ group_data.get('body', '—') }}
                             </td>
                         </tr>
                         {% endfor %}
@@ -618,15 +709,15 @@
                         <td>{{ subj }}</td>
                         <td>{{ type_subj }}</td>
                         <td>
-                            {% if teachers is string %}
-                                {{ teachers }}
+                            {% if teachers|length == 1 %}
+                                {{ teachers[0] }}
                             {% else %}
                                 {{ teachers|join(', ') }}
                             {% endif %}
                         </td>
                         <td>
-                            {% if groups is string %}
-                                {{ groups }}
+                            {% if groups|length == 1 %}
+                                {{ groups[0] }}
                             {% else %}
                                 {{ groups|join(', ') }}
                             {% endif %}
@@ -693,14 +784,23 @@
             input.value = tabId;
         });
 
-        // Остальной код функции остается прежним
+        // Скрываем все вкладки
         document.querySelectorAll('.admin-tab-content').forEach(tab => {
             tab.style.display = 'none';
         });
+
+        // Убираем active у всех кнопок
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('active');
         });
-        document.getElementById(tabId).style.display = 'block';
+
+        // Показываем нужную вкладку
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) {
+            tabEl.style.display = 'block';
+        }
+
+        // Подсвечиваем кнопку
         if (event && event.currentTarget) {
             event.currentTarget.classList.add('active');
         }
@@ -711,61 +811,73 @@
         }
     }
 
-    // Редактирование преподавателя
+    // Редактирование преподавателя (если у тебя есть модалка)
     function editTeacher(id, name) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-name').value = name;
-        document.getElementById('modal-title').textContent = `Редактирование преподавателя #${id}`;
-        document.getElementById('edit-modal').style.display = 'block';
+        const idInput   = document.getElementById('edit-id');
+        const nameInput = document.getElementById('edit-name');
+        const titleEl   = document.getElementById('modal-title');
+        const modal     = document.getElementById('edit-modal');
+
+        if (!idInput || !nameInput || !titleEl || !modal) return;
+
+        idInput.value = id;
+        nameInput.value = name;
+        titleEl.textContent = `Редактирование преподавателя #${id}`;
+        modal.style.display = 'block';
     }
 
-    // Закрытие модального окна
-    document.querySelector('.close-button')?.addEventListener('click', function() {
-        document.getElementById('edit-modal').style.display = 'none';
+    // Закрытие модального окна по крестику
+    document.addEventListener('click', function (e) {
+        const closeBtn = e.target.closest('.close-button');
+        const modal = document.getElementById('edit-modal');
+        if (closeBtn && modal) {
+            modal.style.display = 'none';
+        }
     });
 
     // Закрытие при клике вне окна
     window.addEventListener('click', function(event) {
-        if (event.target === document.getElementById('edit-modal')) {
-            document.getElementById('edit-modal').style.display = 'none';
+        const modal = document.getElementById('edit-modal');
+        if (modal && event.target === modal) {
+            modal.style.display = 'none';
         }
     });
 
     // ========== Множественный выбор без Ctrl ==========
- function initializeMultiSelects() {
-    const multiSelects = document.querySelectorAll("select[multiple]");
+    function initializeMultiSelects() {
+        const multiSelects = document.querySelectorAll("select[multiple]");
 
-    multiSelects.forEach((select) => {
-      // Сохраняем позицию скролла при изменении
-      let scrollPosition = 0;
-      let disabled = false;
+        multiSelects.forEach((select) => {
+            // Сохраняем позицию скролла при изменении
+            let scrollPosition = 0;
+            let disabled = false;
 
-      select.addEventListener("mousedown", function (e) {
-        scrollPosition = this.scrollTop;
-        if (e.target.tagName === "OPTION") {
-          e.preventDefault();
-          e.target.selected = !e.target.selected;
-          const changeEvent = new Event("change");
-          select.dispatchEvent(changeEvent);
-          e.target.classList.toggle("selected", e.target.selected);
-          disabled = true;
-          // Восстанавливаем позицию скролла
-          setTimeout(() => {
-            this.scrollTop = scrollPosition;
-            disabled = false;
-          }, 0);
-        }
-      });
+            select.addEventListener("mousedown", function (e) {
+                scrollPosition = this.scrollTop;
+                if (e.target.tagName === "OPTION") {
+                    e.preventDefault();
+                    e.target.selected = !e.target.selected;
+                    const changeEvent = new Event("change");
+                    select.dispatchEvent(changeEvent);
+                    e.target.classList.toggle("selected", e.target.selected);
+                    disabled = true;
+                    // Восстанавливаем позицию скролла
+                    setTimeout(() => {
+                        this.scrollTop = scrollPosition;
+                        disabled = false;
+                    }, 0);
+                }
+            });
 
-      select.addEventListener("scroll", function () {
-        if (disabled) return;
-        scrollPosition = this.scrollTop;
-      });
-    });
+            select.addEventListener("scroll", function () {
+                if (disabled) return;
+                scrollPosition = this.scrollTop;
+            });
+        });
 
-    // Добавляем стили для выбранных элементов
-    const style = document.createElement("style");
-    style.textContent = `
+        // Добавляем стили для выбранных элементов
+        const style = document.createElement("style");
+        style.textContent = `
             select[multiple] option.selected {
                 background-color: #4285f4;
                 color: white;
@@ -775,15 +887,17 @@
                 color: white;
             }
         `;
-    document.head.appendChild(style);
-  }
+        document.head.appendChild(style);
+    }
 
     // ========== Функции для фильтрации таблицы пар ==========
     function initHoursFilter() {
         const subjectSelect = document.getElementById('hours-subject-select');
-        const groupSelect = document.getElementById('hours-group-select');
+        const groupSelect   = document.getElementById('hours-group-select');
 
-        if (subjectSelect && groupSelect) {
+        if (subjectSelect && groupSelect && !subjectSelect.dataset._hoursInit) {
+            subjectSelect.dataset._hoursInit = '1';
+
             subjectSelect.addEventListener('change', filterHoursTable);
             groupSelect.addEventListener('change', filterHoursTable);
             filterHoursTable();
@@ -792,7 +906,7 @@
 
     function filterHoursTable() {
         const subject = document.getElementById('hours-subject-select')?.value || '';
-        const group = document.getElementById('hours-group-select')?.value || '';
+        const group   = document.getElementById('hours-group-select')?.value || '';
 
         fetch('filter_hours', {
             method: 'POST',
@@ -891,7 +1005,7 @@
                 tableBody.appendChild(row);
             });
         } else {
-            const row = document.createElement('tr');
+            const row  = document.createElement('tr');
             const cell = document.createElement('td');
             cell.colSpan = 3;
             cell.textContent = hoursData === null ? 'Загрузка данных...' : 'Нет данных для отображения по фильтру';
@@ -900,15 +1014,123 @@
         }
     }
 
-    // Инициализация при загрузке страницы
+    // ========== Автокомплит для вкладки "Анкета" ==========
+    function makeAutocomplete(inputId, selectId, listId) {
+        const input  = document.getElementById(inputId);
+        const select = document.getElementById(selectId);
+        const list   = document.getElementById(listId);
+        if (!input || !select || !list) return;
+
+        const options = Array.from(select.options).slice(1); // пропускаем первую "Выберите ..."
+
+        let currentIndex = -1;
+
+        function closeList() {
+            list.style.display = 'none';
+            list.innerHTML = '';
+            currentIndex = -1;
+        }
+
+        function openList() {
+            if (list.children.length > 0) {
+                list.style.display = 'block';
+            } else {
+                closeList();
+            }
+        }
+
+        function renderList(query) {
+            const q = query.toLowerCase().trim();
+            list.innerHTML = '';
+            currentIndex = -1;
+
+            if (!q) {
+                closeList();
+                return;
+            }
+
+            options.forEach(opt => {
+                const text = opt.text;
+                if (text.toLowerCase().includes(q)) {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.textContent = text;
+
+                    item.addEventListener('mousedown', () => {
+                        input.value = text;
+                        select.value = opt.value;
+                        closeList();
+                    });
+
+                    list.appendChild(item);
+                }
+            });
+
+            openList();
+        }
+
+        input.addEventListener('input', () => {
+            select.value = '';
+            renderList(input.value);
+        });
+
+        input.addEventListener('focus', () => {
+            if (input.value.trim()) {
+                renderList(input.value);
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(closeList, 150); // даём время mousedown по пункту
+        });
+
+        input.addEventListener('keydown', (e) => {
+            const items = Array.from(list.children);
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentIndex = (currentIndex + 1) % items.length;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentIndex = (currentIndex - 1 + items.length) % items.length;
+            } else if (e.key === 'Enter') {
+                if (currentIndex >= 0 && currentIndex < items.length) {
+                    e.preventDefault();
+                    const item = items[currentIndex];
+                    const text = item.textContent;
+                    const opt = options.find(o => o.text === text);
+                    if (opt) {
+                        input.value = text;
+                        select.value = opt.value;
+                    }
+                    closeList();
+                }
+                return;
+            } else if (e.key === 'Escape') {
+                closeList();
+                return;
+            } else {
+                return;
+            }
+
+            items.forEach((el, idx) => {
+                el.classList.toggle('active', idx === currentIndex);
+            });
+        });
+    }
+
+    // ========== Общая инициализация ==========
     document.addEventListener('DOMContentLoaded', function() {
         initializeMultiSelects();
 
+        // Перезагрузка после действий на вкладке преподавателей
         document.addEventListener('submit', function(e) {
             if (e.target.closest('#teachers-tab')) {
                 setTimeout(() => location.reload(), 500);
             }
         });
+
         // Получаем активную вкладку из URL или параметра шаблона
         const urlParams = new URLSearchParams(window.location.search);
         const activeTab = urlParams.get('active_tab') || '{{ active_tab }}' || 'teachers-tab';
@@ -935,54 +1157,53 @@
             if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(activeTab)) {
                 btn.classList.add('active');
             }
-
-        // При переключении на вкладку часов инициализируем фильтрацию
-        if (activeTab === 'hours-tab') {
-            initHoursFilter();
-        }
+        });
 
         // Если страница загружена сразу на вкладке часов
-        if (window.location.hash === '#hours-tab') {
+        if (activeTab === 'hours-tab' || window.location.hash === '#hours-tab') {
             initHoursFilter();
         }
 
-        });
+        // Автокомплит во вкладке "Анкета"
+        makeAutocomplete('anketa-teacher-search', 'anketa-sel-teach', 'anketa-teacher-list');
+        makeAutocomplete('anketa-subject-search', 'anketa-sel-subj', 'anketa-subject-list');
     });
 
-     // --- Ограничение на кнопку "Добавить" во вкладке линковки ---
+    // --- Ограничение на кнопку "Добавить" во вкладке линковки ---
     document.addEventListener('DOMContentLoaded', function () {
-    const form   = document.getElementById('linking-form');
-    if (!form) return;
+        const form = document.getElementById('linking-form');
+        if (!form) return;
 
-    const tSel   = document.getElementById('teachers-select');
-    const gSel   = document.getElementById('groups-select');
-    const btn    = document.getElementById('add-linking-btn');
-    const hint   = document.getElementById('linking-hint');
+        const tSel = document.getElementById('teachers-select');
+        const gSel = document.getElementById('groups-select');
+        const btn  = document.getElementById('add-linking-btn');
+        const hint = document.getElementById('linking-hint');
 
-    function countSelected(selectEl) {
-        return Array.from(selectEl.options).filter(o => o.selected).length;
-    }
-
-    function validate() {
-        const total = countSelected(tSel) + countSelected(gSel);
-        const ok = total >= 3;
-        btn.disabled = !ok;
-        hint.style.display = ok ? 'none' : 'block';
-    }
-
-    tSel.addEventListener('change', validate);
-    gSel.addEventListener('change', validate);
-    form.addEventListener('submit', e => {
-        if (btn.disabled) {
-        e.preventDefault();
-        validate();
+        function countSelected(selectEl) {
+            return Array.from(selectEl.options).filter(o => o.selected).length;
         }
+
+        function validate() {
+            const total = countSelected(tSel) + countSelected(gSel);
+            const ok = total >= 3;
+            btn.disabled = !ok;
+            hint.style.display = ok ? 'none' : 'block';
+        }
+
+        tSel.addEventListener('change', validate);
+        gSel.addEventListener('change', validate);
+        form.addEventListener('submit', e => {
+            if (btn.disabled) {
+                e.preventDefault();
+                validate();
+            }
+        });
+
+        validate();
     });
-
-    validate();
-    });
-
-
 </script>
+
+
+
 
 {% endblock %}

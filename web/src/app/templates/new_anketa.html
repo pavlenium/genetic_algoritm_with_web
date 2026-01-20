@@ -9,14 +9,15 @@
 {% block admin_content %}{% endblock %}
 <form method="post">
     <div class="section">
-        <h2 class="section-title">Выберите предмет, который Вам предстоит вести в течение семестра</h2>
+        <br>
+        <!-- <h2 class="section-title">Выберите предмет, который Вам предстоит вести в течение семестра</h2>
         <table class="data-table" id="sizes-table">
-            <tbody> <!-- TODO предметов будет много, надо как-то более "красиво" их расположить -->
+            <tbody> TODO предметов будет много, надо как-то более "красиво" их расположить
             {% for subject_id, subject_name in subjects %}
             <tr><td><a class="btn btn-outline-primary btn-sm" href="subject/{{subject_id}}">{{subject_name}}</a></td></tr>
             {% endfor %}
             </tbody>
-        </table>
+        </table> -->
         <div class="section">
             <h2 class="section-title">Выберите время, в которое Вам удобно работать</h2>
             <table class="data-table" id="sizes-table">

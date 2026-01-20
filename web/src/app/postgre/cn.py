@@ -46,6 +46,7 @@ class Connect:
             print("Таблицы успешно созданы или уже существуют.")
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при создании таблиц {e}.")
             return False
 
@@ -62,6 +63,7 @@ class Connect:
                     ts[row[0]] = [row[1]]
             return ts
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных преподаватель - предмет {e}.")
             return {}
 
@@ -75,6 +77,7 @@ class Connect:
                 ts[row[0], row[1]] = row[2]
             return ts
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных преподаватель - предмет {e}.")
             return {}
 
@@ -88,6 +91,7 @@ class Connect:
                 result[row[0]] = row[1]
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return {}
 
@@ -99,6 +103,7 @@ class Connect:
             result = [row[0] for row in rows]
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о свойствах: {e}.")
             return []
 
@@ -112,6 +117,7 @@ class Connect:
                 result[row[0]] = ast.literal_eval(row[1])
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return {}
 
@@ -125,6 +131,7 @@ class Connect:
                 result.append(row[0])
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
@@ -136,6 +143,7 @@ class Connect:
             result = [row[0] for row in rows]
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
@@ -147,6 +155,7 @@ class Connect:
             result = [row[0] for row in rows]
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
@@ -158,6 +167,7 @@ class Connect:
             result = [row[0] for row in rows]
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о времени: {e}.")
             return []
 
@@ -171,6 +181,7 @@ class Connect:
                 result.append([row[1], row[2], row[3], row[4]])
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
@@ -185,6 +196,7 @@ class Connect:
                 result.append([row[1], row[2]])
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
@@ -199,6 +211,7 @@ class Connect:
                 result.append([row[1], row[2], row[3], row[4]])
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
@@ -228,6 +241,7 @@ class Connect:
                 return result
             return {}
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о tsgl: {e}.")
             return {}
 
@@ -261,6 +275,7 @@ class Connect:
                 return result
             return {}
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о teacher_time: {e}.")
             return {}
 
@@ -294,6 +309,7 @@ class Connect:
                 return result
             return {}
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о lock_slot: {e}.")
             return {}
 
@@ -309,6 +325,7 @@ class Connect:
                     group = row[0]
                     day = row[1]
                     time_slot = row[2]
+                    body = row[5]
 
                     if row[3] == True and row[4] == False:
                         cz = "odd"
@@ -327,9 +344,12 @@ class Connect:
                         }
                     result_2[group][day][time_slot] = cz
 
+                    result_2[group]["body"] = body
+
                 return result_2
             return {}
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка в select_locks: {e}.")
             return {}
 
@@ -339,6 +359,7 @@ class Connect:
             self.cur.execute(SELECT_HOURS, (subject_name, group_name))
             return self.cur.fetchall()
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных о hours: {e}")
             return []
 
@@ -348,9 +369,34 @@ class Connect:
             self.cur.execute(SELECT_ALL_HOURS)
             return self.cur.fetchall()
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при вытягивании данных из hours: {e}")
             return []
-
+        
+    def select_id_table_name(self, table: str, name: str) -> int:
+        """Вытянуть id из таблицы table по name=name"""
+        try:
+            query = SELECT_TABLE_NAME.format(table=table)
+            self.cur.execute(query, (name,))
+            result = self.cur.fetchall()[0][0]
+            return result
+        except Exception as e:
+            self.conn.rollback()
+            print(f'Ошибка в select_id_table_name: {e}')
+            return 0
+    
+    def select_name_from_table_where_id(self, table: str, id: int) -> str:
+        """Вытянуть из таблицы table все данные"""
+        try:
+            self.cur.execute(SELECT_NAME_FROM_TABLE_WHERE_ID.format(table=table, id=id))
+            result = self.cur.fetchall()[0][0]
+            print()
+            return result
+        except Exception as e:
+            self.conn.rollback()
+            print(f'Ошибка в select_id_table_name: {e}')
+            return ''
+        
     def drop_tables(self) -> bool:
         """функция удаления таблиц (необходима в процессе разработки для тестов)"""
         try:
@@ -368,6 +414,7 @@ class Connect:
             print("Таблицы успешно удалены.")
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении таблиц: {e}.")
             return False
 
@@ -400,6 +447,7 @@ class Connect:
             print("Данные 'Предмет' добавлены в базу данных")
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении данных в таблицу 'Анкета: Таблица1': {e}.")
             return False
 
@@ -426,6 +474,7 @@ class Connect:
             print("Данные 'Анкета: Таблица2' добавлены в базу данных")
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении данных в таблицу 'Анкета: Таблица2': {e}.")
             return False
 
@@ -436,24 +485,25 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f'Ошибка в insert_teacher: {e}')
             return False
 
-    def insert_lock_table(self, data: dict, subject: str) -> bool:
+    def insert_lock_table(self, data: dict, subject: str, body: str) -> bool:
         """функция заполнения lock_slot при заполнении таблицы блокировки слотов (вкладка - Админ Панель)"""
         # data = {'Понедельник': {'08:30 - 10:00': 'odd', '11:50 - 13:20': 'even'}, 'Вторник': {'19:15 - 20:45': 'both'}, 'Среда': {}, 'Четверг': {}, 'Пятница': {}, 'Суббота': {}}<- из анкеты таблица 2
         zapros_insert = '''
-        INSERT INTO public.lock_slot (group_name, day, time, numerator, denominator)
+        INSERT INTO public.lock_slot (group_name, day, time, numerator, denominator, body)
             VALUES '''
         for day, time_cz in data.items():
             for time, cz in time_cz.items(): # cz - это odd(Чс), even(Зн) или both(Чс и Зн)
                 # print(teacher, day, time , cz)
                 if cz == "odd":
-                    zapros_insert += "\n\t" + f"('{subject}', '{day}', '{time}', true, false),"
+                    zapros_insert += "\n\t" + f"('{subject}', '{day}', '{time}', true, false, '{body}'),"
                 elif cz == "even":
-                    zapros_insert += "\n\t" + f"('{subject}', '{day}', '{time}', false, true),"
+                    zapros_insert += "\n\t" + f"('{subject}', '{day}', '{time}', false, true, '{body}'),"
                 else:
-                    zapros_insert += "\n\t" + f"('{subject}', '{day}', '{time}', true, true),"
+                    zapros_insert += "\n\t" + f"('{subject}', '{day}', '{time}', true, true, '{body}'),"
         zapros_insert = zapros_insert[:-1] + ";"
         zapros_delete = DELETE_SUBJECT_FROM_LOCK_SLOT + f"'{subject}';"
         try:
@@ -463,6 +513,7 @@ class Connect:
             print(f"Данные по блокировке слота {subject} добавлены")
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении данных в таблицу 'lock_slot': {e}.")
             return False
 
@@ -475,6 +526,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ощибка при добавлении новой аудитории {name}: {e}")
             return False
 
@@ -486,6 +538,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении данных в hours: {e}")
             return False
 
@@ -506,6 +559,7 @@ class Connect:
             print("Данные в таблицы успешно добавлены.")
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении данных в таблицы: {e}.")
             return False
 
@@ -517,6 +571,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении данных в teachers: {e}.")
             return False
 
@@ -528,6 +583,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении через админку данных о group: {e}.")
             return False
 
@@ -538,6 +594,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении через админку данных о subject: {e}.")
             return False
 
@@ -548,6 +605,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при добавлении через админку данных о classroom: {e}.")
             return False
 
@@ -558,6 +616,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при заполнении tgsl: {e}")
             return False
     
@@ -565,7 +624,7 @@ class Connect:
         """Функция заполнения таблицы linking"""
         try:
             flag_for_id_para = False # для: если было хотя бы одно обновление max_id_para, то не меняй max_id_para
-            self.linking_edit_id_para() # Делает так, что минимальный id_para всегда 1. Тк в процессе редактирования эти id перезаписываются и в процессе выглядят некрасиво
+            # self.linking_edit_id_para() # Делает так, что минимальный id_para всегда 1. Тк в процессе редактирования эти id перезаписываются и в процессе выглядят некрасиво
             for teacher in teachers:
                 for group in groups:
                     # if not self.check_linking(subject, type_subject, teacher, group):
@@ -582,6 +641,7 @@ class Connect:
                     self.cur.execute(INSERT_LINKING + f'(\'{subject}\', \'{type_subject}\', \'{teacher}\', \'{group}\', {max_id_para});\n')
             self.conn.commit()
         except Exception as e:
+            self.conn.rollback()
             print(f'Ошибка в insert_linking: {e}')
     
     def linking_edit_id_para(self) -> None:
@@ -589,22 +649,23 @@ class Connect:
         с мин id_para, то в последствии он мин id_para превр в max id_para + 1. 
         Попробуйте закомментировать в вызываемом коде и посмотреть как работает"""
         try:
-            self.cur.execute("""
-                WITH mapping AS (
-                SELECT
-                    old_id_para,
-                    DENSE_RANK() OVER (ORDER BY old_id_para) AS new_id_para
-                FROM (
-                    SELECT DISTINCT id_para AS old_id_para
-                    FROM linking
-                ) d
-                )
-                UPDATE linking AS l
-                SET id_para = m.new_id_para
-                FROM mapping AS m
-                WHERE l.id_para = m.old_id_para
-                AND l.id_para <> m.new_id_para;
-                """)
+            # self.cur.execute("""
+            #     WITH mapping AS (
+            #     SELECT
+            #         old_id_para,
+            #         DENSE_RANK() OVER (ORDER BY old_id_para) AS new_id_para
+            #     FROM (
+            #         SELECT DISTINCT id_para AS old_id_para
+            #         FROM linking
+            #     ) d
+            #     )
+            #     UPDATE linking AS l
+            #     SET id_para = m.new_id_para
+            #     FROM mapping AS m
+            #     WHERE l.id_para = m.old_id_para
+            #     AND l.id_para <> m.new_id_para;
+            #     """)
+            # 
             # self.cur.execute("""
             #     WITH ids AS (
             #     SELECT DISTINCT id_para
@@ -624,32 +685,23 @@ class Connect:
             #     """)
             self.conn.commit()
         except Exception as e:
+            self.conn.rollback()
             print(f'Ошибка в linking_edit_id_para: {e}')
     
     def update_linking(self, subject_old: str, type_subject_old: str, subject_new: str, type_subject_new: str, teachers: list, groups: list, id_para: int) -> None:
         """Обновить связку: заменить старый subject/type_subject на новый + обновить преподавателей и группы"""
         try:
             self.cur.execute(
-                "DELETE FROM linking WHERE subject = %s AND type_subj = %s AND id_para = %s;",
-                (subject_old, type_subject_old, id_para)
+                "DELETE FROM linking WHERE id_para=%s;",
+                (str(id_para))
             )
+            for teacher in teachers:
+                for group in groups:
+                    self.cur.execute(INSERT_LINKING + f'(\'{subject_new}\', \'{type_subject_new}\', \'{teacher}\', \'{group}\', {id_para});\n')
 
-            self.insert_linking(subject_new, type_subject_new, teachers, groups)
-            # for teacher in teachers:
-            #     for group in groups:
-            #         self.cur.execute(SELECT_LINKING_ID_PARA)
-            #         max_id_para = self.cur.fetchall()
-            #         if max_id_para:
-            #             max_id_para = max_id_para[0] + 1
-            #         else:
-            #             max_id_para = 1
-            #         self.cur.execute(
-            #             INSERT_LINKING + " (%s, %s, %s, %s, %s);",
-            #             (subject_new, type_subject_new, teacher, group, max_id_para)
-            #         )
-            # 
-            # self.conn.commit()
+            self.conn.commit()
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка в update_linking: {e}")
 
     def check_one_column(self, table: str, column: str, value: str) -> bool:
@@ -661,6 +713,7 @@ class Connect:
                 return True
             return False
         except Exception as e:
+            self.conn.rollback()
             print(f'Ошибка в check_one_column: {e}')
             return False
 
@@ -673,6 +726,7 @@ class Connect:
                 return True
             return False
         except Exception as e:
+            self.conn.rollback()
             print(f'Ошибка в check_linking: {e}')
             return False
 
@@ -684,6 +738,7 @@ class Connect:
             result = self.cur.fetchall()
             return result
         except Exception as e:
+            self.conn.rollback()
             print(f'Ошибка в select_linking: {e}')
             return []
     
@@ -693,6 +748,7 @@ class Connect:
             self.cur.execute(DELETE_LINKING_STROKE + f'\'{subject}\' AND type_subj=\'{type_subject}\' AND id_para={id_para};')
             self.conn.commit()
         except Exception as e:
+            self.conn.rollback()
             print(f'Ошибка в delete_linking_stroke: {e}')
 
     def delete_from_teacher(self, name: str) -> bool:
@@ -703,6 +759,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в teachers: {e}.")
             return False
 
@@ -714,6 +771,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в teacher_group_subject_ls: {e}.")
             return False
 
@@ -726,6 +784,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в teacher_time: {e}.")
             return False
     
@@ -736,6 +795,7 @@ class Connect:
             self.cur.execute(query)
             self.conn.commit()
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка в delete_from_table: {e}.")
 
     def delete_from_table_name(self, table: str, name: str) -> bool:
@@ -746,6 +806,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в {table} where name={name}: {e}.")
             return False
 
@@ -757,6 +818,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в hours where subject_name={name}: {e}.")
             return False
 
@@ -768,6 +830,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в {table} where group_name={name}: {e}.")
             return False
 
@@ -779,6 +842,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в hours where group_name={group} and subject_name={subject}: {e}.")
             return False
 
@@ -790,6 +854,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении данных в teacher_group_subject_ls where subject='{subject}': {e}.")
             return False
 
@@ -801,6 +866,7 @@ class Connect:
             self.conn.commit()
             return True
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при удалении таблицы {table}: {e}")
             return False
 
@@ -814,6 +880,7 @@ class Connect:
                 return True
             return False
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при проверки строк в {table}: {e}.")
             return False
 
@@ -827,6 +894,7 @@ class Connect:
                 return True
             return False
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при проверке строк в hours: {e}.")
             return False
 
@@ -841,6 +909,7 @@ class Connect:
             return False
 
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка при проверке строк в {table}: {e}.")
             return False
 
@@ -859,6 +928,7 @@ class Connect:
             self.cur.execute(query, params)
             return self.cur.fetchall()
         except Exception as e:
+            self.conn.rollback()
             print(f"Ошибка в select_filtered_table: {e}")
             return []
 

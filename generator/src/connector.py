@@ -2,15 +2,13 @@ from collections import defaultdict
 from typing import Any, Dict
 import psycopg2
 from decouple import config
-import json
 import pprint
 
-
 class DatabaseConnector:
-    POSTGRES_DB = config("POSTGRES_DB")
-    POSTGRES_USER = config("POSTGRES_USER")
-    POSTGRES_PASSWORD = config("POSTGRES_PASSWORD")
-    POSTGRES_HOST = config("POSTGRES_HOST")
+    POSTGRES_DB = config("POSTGRES_DB", default="postgres_db")
+    POSTGRES_USER = config("POSTGRES_USER", default="chillout")
+    POSTGRES_PASSWORD = config("POSTGRES_PASSWORD", default="P@ssw0rd@123")
+    POSTGRES_HOST = config("POSTGRES_HOST", default="10.10.1.125")
     POSTGRES_PORT = config("POSTGRES_PORT", default="5433", cast=int)
 
     CURSORS_TO_KEYS = {
@@ -20,6 +18,9 @@ class DatabaseConnector:
         "cursor_subjects": "subjects",
         "cursor_teachers": "teachers",
         "cursor_times": "lesson_slots",
+        "cursor_teacher_time": "teacher_time",
+        "cursor_tgsl": "tgls",
+        "cursor_linking": "linking",  
     }
 
     def __init__(self):
@@ -46,51 +47,56 @@ class DatabaseConnector:
         if not self.cursor:
             raise ValueError("Соединение с БД не установлено")
 
-        data = {}
+        data: Dict[str, Any] = {}
+
         self.cursor.callproc("select_configuration")
-        available_cursors: list[str] = self.cursor.fetchone()
 
-        if available_cursors:
-            for cursor_name in available_cursors:
-                if cursor_name in self.CURSORS_TO_KEYS:
-                    self.cursor.execute(f"FETCH ALL FROM {cursor_name}")
-                    raw_data = self.cursor.fetchall()
-                    key = self.CURSORS_TO_KEYS[cursor_name]
-                    data[key] = raw_data
+        available_cursors = self.cursor.fetchone()
 
-        #берем данные из вьюхи
-        self.cursor.execute("""
-            SELECT 
-                teacher,
-                subject,
-                ls,
-                group_name,
-                COALESCE(seminars, 0) AS seminars,
-                COALESCE(lectures, 0) AS lectures,
-                COALESCE(labs, 0) AS labs
-            FROM view_tgls_with_hours
-        """)
-        rows = self.cursor.fetchall()
+        for cursor_name in available_cursors:
+            if not cursor_name:
+                continue
 
-        #теперь ключ делаем (group, subject, lesson_type)
+            cursor_name = cursor_name.strip()
+
+            if cursor_name not in self.CURSORS_TO_KEYS:
+                continue
+
+            self.cursor.execute(f'FETCH ALL FROM "{cursor_name}"')
+            rows = self.cursor.fetchall()
+
+            data[self.CURSORS_TO_KEYS[cursor_name]] = rows
+
+        rows = data.get("tgls", [])
+
         group_subject_requirements = defaultdict(int)
         teacher_subjects = defaultdict(list)
         lesson_types = {}
 
-        for teacher_name, subject_name, lesson_type, group_name, seminars, lectures, labs in rows:
+        for (
+            _id,
+            teacher_name,
+            subject_name,
+            lesson_type,
+            group_name,
+            lectures,
+            seminars,
+            labs,
+        ) in rows:
             seminars = int(seminars or 0)
             lectures = int(lectures or 0)
             labs = int(labs or 0)
 
-            #определяем количество по типу
-            if lesson_type.lower() == "семинар":
+            lt = lesson_type.lower()
+
+            if lt == "семинар":
                 count = seminars
-            elif lesson_type.lower() == "лекция":
+            elif lt == "лекция":
                 count = lectures
-            elif lesson_type.lower() == "лаба":
+            elif lt == "лаба":
                 count = labs
             else:
-                count = 0
+                continue
 
             if count <= 0:
                 continue
@@ -102,32 +108,52 @@ class DatabaseConnector:
 
             lesson_types[(group_name, subject_name, teacher_name)] = lesson_type
 
-        self.cursor.execute("""
-            SELECT teacher, day, time, numerator, denominator
-            FROM teacher_time
-        """)
-        teacher_time_rows = self.cursor.fetchall()
+        teacher_time_rows = data.get("teacher_time", [])
 
         teacher_availability = defaultdict(set)
-        for teacher, day, time, numerator, denominator in teacher_time_rows:
-            if numerator:
+        for _id, teacher, day, time, numerator, denominator in teacher_time_rows:
+            if numerator not in (None, 0, '0'):
                 teacher_availability[teacher].add(f"{day}_ч|{time}")
-            if denominator:
+            if denominator not in (None, 0, '0'):
                 teacher_availability[teacher].add(f"{day}_з|{time}")
+
+        # --- НОВОЕ ---
+        linking_rows = data.get("linking", [])
+        linked_groups_by_id_para = defaultdict(list)
+        for row in linking_rows:
+            if len(row) >= 6:
+                _, subject, lesson_type, teacher, group_name, id_para = row[:6]
+                linked_groups_by_id_para[id_para].append({
+                    "group": group_name,
+                    "subject": subject,
+                    "lesson_type": lesson_type,
+                    "teacher": teacher,
+                })
+
+        # Убираем дубликаты по группе в рамках id_para
+        for id_para, groups in linked_groups_by_id_para.items():
+            unique_groups = []
+            seen = set()
+            for g in groups:
+                if g["group"] not in seen:
+                    unique_groups.append(g)
+                    seen.add(g["group"])
+            linked_groups_by_id_para[id_para] = unique_groups
+
 
         data["teacher_availability"] = dict(teacher_availability)
         data["group_subject_requirements"] = dict(group_subject_requirements)
         data["teacher_subjects"] = dict(teacher_subjects)
         data["lesson_types"] = lesson_types
+        data["linked_groups_by_id_para"] = dict(linked_groups_by_id_para)  # <-- НОВОЕ
 
         return data
-
 
 if __name__ == "__main__":
     connector = DatabaseConnector()
     connector.connect()
     try:
-        data1 = connector.fetch_initial_data()
-        pprint.pprint(data1)
+        data = connector.fetch_initial_data()
+        pprint.pprint(data)
     finally:
         connector.close()

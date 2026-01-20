@@ -18,8 +18,8 @@ def transform_linkings(data: list):
         groups = tuple(sorted(vals["groups"]))
         # id_para = vals["id_para"]
         # если преподаватель один — оставляем строку, а не tuple
-        teachers = teachers if len(teachers) > 1 else teachers[0]
-        groups   = groups   if len(groups) > 1   else groups[0]
+        # teachers = teachers if len(teachers) > 1 else teachers[0]
+        # groups   = groups   if len(groups) > 1   else groups[0]
         transformed.append((subj, type_subj, teachers, groups, id_para))
-
+    # print(transformed)
     return transformed

@@ -11,7 +11,7 @@ from app.auth import auth_required
 app = Flask(__name__)
 # ! ! ! ! app.config['UPLOAD_FOLDER'] = os.getenv("PATH_TO_USER_UPLOADS", os.path.join(os.getcwd(), "uploads") )
 
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "1111111111")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "16VY{1h7.W)")
 
 
 @admin_router.before_request

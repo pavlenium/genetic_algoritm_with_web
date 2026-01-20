@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='anketa.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='lock_table.css') }}">
 </head>
 <body>
 <br>
-<br>
-<br>
-<br>
-<br>
 <form method="post">
     <input type="hidden" name="active_tab" value="lock-slot-tab">
+    <h1>{{ group }}</h1>
     <div class="section">
         <div class="section">
             <h2 class="section-title">Укажите время для блокировки слота</h2>
+                <h3>Укажите корпус</h3>
+                <div class="form-row">
+                <select name="lock_redact_body" required class="form-select">
+                    <!-- <option value="">----------------</option> -->
+                    {% for b in body_classroom %}
+                        <option value="{{ b }}" {% if b == body %}selected{% endif %}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+                </div>
+            <br>
             <table class="data-table" id="sizes-table">
                 <thead>
                 <tr>
@@ -39,7 +46,7 @@
                         ] %}
                         {% for slot_num, display_time in time_slots %}
 <!--                        {{ display_time }}-->
-                        <div>
+                        <div class="time-slot">
                             <span class="time-label">{{ display_time }}</span>
                             <input type="checkbox"
                                    id="time{{ day_num }}{{ slot_num }}"
@@ -111,6 +118,14 @@
                     if (oddCheckbox) oddCheckbox.checked = false;
                     if (evenCheckbox) evenCheckbox.checked = false;
                 }
+                // ↓↓↓ ДОБАВЬ ЭТО ↓↓↓
+                const slotDiv = this.closest('.time-slot') || this.parentElement;
+                if (this.checked) {
+                slotDiv.classList.add('slot-active');
+                } else {
+                slotDiv.classList.remove('slot-active');
+                }
+                // ↑↑↑ ДОБАВИЛИ ПОДСВЕТКУ ↑↑↑
             });
         });
 
@@ -126,7 +141,9 @@
                         // Устанавливаем основной чекбокс времени
                         const timeCheckbox = document.querySelector(`input[name="choice${dayNum}${slotNum}"]`);
                         if (timeCheckbox) timeCheckbox.checked = true;
-
+                        // подсветим слот, раз он выбран из бэка
+                        const slotDiv = timeCheckbox.closest('.time-slot') || timeCheckbox.parentElement;
+                        if (slotDiv) slotDiv.classList.add('slot-active');
                         // Устанавливаем чекбоксы недель
                         const oddCheckbox = document.querySelector(`input[name="odd_week${dayNum}${slotNum}"]`);
                         const evenCheckbox = document.querySelector(`input[name="even_week${dayNum}${slotNum}"]`);

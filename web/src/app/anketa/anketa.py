@@ -55,7 +55,7 @@ def anketa():
     selected_times = connect.select_teacher_time(user)
     times = connect.select_times()
     times_slots = []
-    for i, g in enumerate(times):
+    for i, g in enumerate(times, 1):
         times_slots.append((i, g))
     # print(times_slots)
     # print(selected_times)
@@ -74,41 +74,41 @@ def anketa():
                            )
 
 
-@anketa_router.route("/subject/<int:subject_id>", methods=["GET", "POST"])
-def set_groups_to_subject(subject_id: int):
-    connect = Connect()
-    user = session.get("user")
-    subjects_list = connect.select_subjects()
-    groups = connect.select_groups()
-    subject_list: list[str] = connect.select_subjects()
-    if request.method == "POST":
-        result = {
-            "table_sem": [],
-            "table_lec": [],
-            "table_lab": []
-        }
-        for key, value in request.form.items():
-            if key.startswith("sem_"):
-                result["table_sem"].append(value)
-            if key.startswith("lec_"):
-                result["table_lec"].append(value)
-            if key.startswith("lab_"):
-                result["table_lab"].append(value)
-        final_result = {user: {subjects_list[subject_id-1]: result}}
-        connect.insert_teacher_group_subject_ls(final_result)
-        return redirect("/anketa")
+# @anketa_router.route("/subject/<int:subject_id>", methods=["GET", "POST"])
+# def set_groups_to_subject(subject_id: int):
+#     connect = Connect()
+#     user = session.get("user")
+#     subjects_list = connect.select_subjects()
+#     groups = connect.select_groups()
+#     subject_list: list[str] = connect.select_subjects()
+#     if request.method == "POST":
+#         result = {
+#             "table_sem": [],
+#             "table_lec": [],
+#             "table_lab": []
+#         }
+#         for key, value in request.form.items():
+#             if key.startswith("sem_"):
+#                 result["table_sem"].append(value)
+#             if key.startswith("lec_"):
+#                 result["table_lec"].append(value)
+#             if key.startswith("lab_"):
+#                 result["table_lab"].append(value)
+#         final_result = {user: {subjects_list[subject_id-1]: result}}
+#         connect.insert_teacher_group_subject_ls(final_result)
+#         return redirect("/anketa")
 
-    if len(subject_list)<subject_id:
-        return redirect("/anketa")
-    subject = subject_list[subject_id-1]
-    data_tgsl = connect.select_teacher_group_subject_ls(user)
-    if user in data_tgsl and subject in data_tgsl[user]:
-        data_tgsl = connect.select_teacher_group_subject_ls(user)[user][subject]
-    # print(data_tgsl)
-    # print('13123', subject)
-    return  render_template("anketa_subject.html",
-                           title=f"Предмет - {subject}",
-                           groups_list=groups,
-                            backend_data=data_tgsl,
-                            user=user
-                           )
+#     if len(subject_list)<subject_id:
+#         return redirect("/anketa")
+#     subject = subject_list[subject_id-1]
+#     data_tgsl = connect.select_teacher_group_subject_ls(user)
+#     if user in data_tgsl and subject in data_tgsl[user]:
+#         data_tgsl = connect.select_teacher_group_subject_ls(user)[user][subject]
+#     # print(data_tgsl)
+#     # print('13123', subject)
+#     return  render_template("anketa_subject.html",
+#                            title=f"Предмет - {subject}",
+#                            groups_list=groups,
+#                             backend_data=data_tgsl,
+#                             user=user
+#                            )
