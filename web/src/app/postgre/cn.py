@@ -5,6 +5,8 @@ from decouple import config
 
 from sqlz import *  # прописанные SQL запросы
 
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 
 class Connect:
     POSTGRES_DB = config("POSTGRES_DB")
@@ -13,7 +15,7 @@ class Connect:
     POSTGRES_HOST = config("POSTGRES_HOST")
     POSTGRES_PORT = config("POSTGRES_LOCAL_PORT", default="5433", cast=int)  # 5432 in docker subnet
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.conn = psycopg2.connect(
             database=self.POSTGRES_DB,
             user=self.POSTGRES_USER,
@@ -24,7 +26,7 @@ class Connect:
         self.cur = self.conn.cursor()
         # print('Подключение к БД успешно')
 
-    def create_tables(self):
+    def create_tables(self) -> bool:
         """Создание таблиц (без заполнения)"""
         try:
             self.cur.execute(CREATE_TEACHERS_TABLE)
@@ -50,7 +52,7 @@ class Connect:
             print(f"Ошибка при создании таблиц {e}.")
             return False
 
-    def select_teach_subj(self) -> dict:
+    def select_teach_subj(self) -> Dict[str, List[str]]:
         """Вытягивание данных из таблицы teacher_to_subject в формате {'teacher': 'subject', ...} (устарела)"""
         try:
             self.cur.execute(TEACHER_TO_SUBJECT)
@@ -67,7 +69,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных преподаватель - предмет {e}.")
             return {}
 
-    def select_group_subj(self) -> dict:
+    def select_group_subj(self) -> Dict[Tuple[str, str], int]:
         """Вытягивание данных из таблицы group_to_subject в формате {('group', 'subject'): 'hours', ...} (устарела)"""
         try:
             self.cur.execute(GROUP_TO_SUBJECT)
@@ -81,7 +83,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных преподаватель - предмет {e}.")
             return {}
 
-    def select_groups(self) -> dict:
+    def select_groups(self) -> Dict[str, int]:
         """Вытягивание данных из таблицы groups в формате {'group_name': 'Count_people_in_group', ...}"""
         try:
             self.cur.execute(SELECT_GROUPS)
@@ -95,7 +97,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return {}
 
-    def select_property(self) -> list:
+    def select_property(self) -> List[str]:
         """Вытягивание данных из таблицы property в формате ['property1', 'property2', ...]"""
         try:
             self.cur.execute(SELECT_PROPERTY)
@@ -107,7 +109,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о свойствах: {e}.")
             return []
 
-    def select_subjects_dict(self) -> dict:
+    def select_subjects_dict(self) -> Dict[str, List[str]]:
         """Вытягивание данных из таблицы subjects в формате {'subject_name': ['property1', 'property3', ...], ...}"""
         try:
             self.cur.execute(SELECT_SUBJECTS_DICT)
@@ -121,7 +123,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return {}
 
-    def select_subjects(self) -> list:
+    def select_subjects(self) -> List[str]:
         """Вытягивание данных из таблицы subjects в формате ['subject1', 'subject2', ...]"""
         try:
             self.cur.execute(SELECT_SUBJECTS)
@@ -134,8 +136,19 @@ class Connect:
             self.conn.rollback()
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
+        
+    def select_name_by_id(self, table: str, id_subject: int) -> Union[str, int]:
+        """Вытягивание предмета из таблицы subjects по его id"""
+        try:
+            query = SELECT_SUBJECT_ID.format(table=table)
+            self.cur.execute(query, (id_subject,))
+            result = self.cur.fetchall()[0][0]
+            return result
+        except Exception as e:
+            print(f'Ошибка в select_name_by_id: {e}')
+            return 0
 
-    def select_teachers(self) -> list:
+    def select_teachers(self) -> List[str]:
         """Вытягивание данных из таблицы teachers в формате ['teacher1', 'teacher2', ...]"""
         try:
             self.cur.execute(SELECT_TEACHERS)
@@ -147,7 +160,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
-    def select_body_classroom(self) -> list:
+    def select_body_classroom(self) -> List[str]:
         """Вытягивание данных из таблицы body_classroom в формате ['ГЗ', 'УЛК', ...]"""
         try:
             self.cur.execute(SELECT_BODY_CLASSROOM)
@@ -159,7 +172,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
-    def select_times(self) -> list:
+    def select_times(self) -> List[str]:
         """Вытягивание данных из таблицы times в формате ['time1', 'time2', ...]"""
         try:
             self.cur.execute(SELECT_TIMES)
@@ -171,7 +184,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о времени: {e}.")
             return []
 
-    def select_all_tgsl(self) -> list:
+    def select_all_tgsl(self) -> List[List[Any]]:
         """Достаем все данные из teacher_subject_group_ls (кроме id) в формате: [[teacher, subject, group, ls], ...]"""
         try:
             self.cur.execute(SELECT_ALL_TGSL)
@@ -185,7 +198,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
-    def select_all_subjects(self) -> list:
+    def select_all_subjects(self) -> List[List[Any]]:
         """Достаем все данные из subjects (кроме id) в формате: [[subject_name, property], ...]"""
         try:
             self.cur.execute(SELECT_ALL_SUBJECTS)
@@ -200,7 +213,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
-    def select_all_classrooms(self) -> list:
+    def select_all_classrooms(self) -> List[List[Any]]:
         """Достаем все данные из classrooms (кроме id) в формате: [[number_auditory, property], ...]"""
         try:
             self.cur.execute(SELECT_ALL_CLASSROOMS)
@@ -215,7 +228,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о группах: {e}.")
             return []
 
-    def select_teacher_group_subject_ls(self, name: str) -> dict:
+    def select_teacher_group_subject_ls(self, name: str) -> Dict[str, Dict[str, Dict[str, str]]]:
         """Достаем данные из teacher_subject_group_ls в формате: {'teacher': {'subject': {'lesson_type': 'group'}}, ...}"""
         try:
             self.cur.execute(SELECT_TEACHER_GROUP_SUBJECT_LS + f"'{name}';")
@@ -245,7 +258,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о tsgl: {e}.")
             return {}
 
-    def select_teacher_time(self, name: str) -> dict:
+    def select_teacher_time(self, name: str) -> Dict[str, Dict[str, str]]:
         """Тянем данные из teacher_time в формате {'Понедельник': {'08:30 - 10:00': 'odd', '11:50 - 13:20': 'even'}, 'Вторник': {'19:15 - 20:45': 'both'}, 'Среда': {}, 'Четверг': {}, 'Пятница': {}, 'Суббота': {}}"""
         try:
             self.cur.execute(SELECT_TEACHER_TIME + f"'{name}';")
@@ -279,7 +292,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о teacher_time: {e}.")
             return {}
 
-    def select_lock(self, subject: str) -> dict:
+    def select_lock(self, subject: str) -> Dict[str, Dict[str, str]]:
         """Тянем данные из lock_slot по имени в формате {'Понедельник': {'08:30 - 10:00': 'odd', '11:50 - 13:20': 'even'}, 'Вторник': {'19:15 - 20:45': 'both'}, 'Среда': {}, 'Четверг': {}, 'Пятница': {}, 'Суббота': {}}"""
         try:
             self.cur.execute(SELECT_LOCK + f"'{subject}';")
@@ -313,7 +326,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о lock_slot: {e}.")
             return {}
 
-    def select_locks(self) -> dict:
+    def select_locks(self) -> Dict[str, Dict[str, str]]:
         """Тянем данные из lock_slot в формате {'Понедельник': {'08:30 - 10:00': 'odd', '11:50 - 13:20': 'even'}, 'Вторник': {'19:15 - 20:45': 'both'}, 'Среда': {}, 'Четверг': {}, 'Пятница': {}, 'Суббота': {}}"""
         try:
             self.cur.execute(SELECT_LOCKS)
@@ -353,7 +366,7 @@ class Connect:
             print(f"Ошибка в select_locks: {e}.")
             return {}
 
-    def select_hours(self, subject_name: str, group_name: str) -> list:
+    def select_hours(self, subject_name: str, group_name: str) -> List[Tuple[str, str, int, int, int]]:
         """Из таблицы hours по имени предмета и группы тянем данные в формате [subject_name, group_name, seminars, lectures, labs]"""
         try:
             self.cur.execute(SELECT_HOURS, (subject_name, group_name))
@@ -363,7 +376,7 @@ class Connect:
             print(f"Ошибка при вытягивании данных о hours: {e}")
             return []
 
-    def select_all_hours(self) -> list:
+    def select_all_hours(self) -> List[Tuple[str, str, int, int, int]]:
         """Из таблицы hours тянем все данные формате [subject_name, group_name, seminars, lectures, labs]"""
         try:
             self.cur.execute(SELECT_ALL_HOURS)
@@ -550,17 +563,38 @@ class Connect:
             self.cur.execute(INSERT_TEACHERS)
             self.cur.execute(INSERT_GROUPS)
             self.cur.execute(INSERT_SUBJECTS)
-            self.cur.execute(INSERT_TIMES)
+            # self.cur.execute(INSERT_TIMES)
             self.cur.execute(INSERT_CLASSROOM)
             self.cur.execute(INSERT_PROPERTY)
-            self.cur.execute(INSERT_BODY_CLASSROOM_TABLE)
+            # self.cur.execute(INSERT_BODY_CLASSROOM_TABLE)
             self.cur.execute(INSERT_HOURS)
             self.conn.commit()
             print("Данные в таблицы успешно добавлены.")
             return True
         except Exception as e:
             self.conn.rollback()
-            print(f"Ошибка при добавлении данных в таблицы: {e}.")
+            print(f"Ошибка в insert_tables: {e}.")
+            return False
+
+    def insert_static_body_classroom(self):
+        """Заполнение таблицы body_classroom и times статичными данными"""
+        try:
+            # self.cur.execute(INSERT_TS)
+            # self.cur.execute(INSERT_GS)
+            # self.cur.execute(INSERT_TEACHERS)
+            # self.cur.execute(INSERT_GROUPS)
+            # self.cur.execute(INSERT_SUBJECTS)
+            self.cur.execute(INSERT_TIMES)
+            # self.cur.execute(INSERT_CLASSROOM)
+            # self.cur.execute(INSERT_PROPERTY)
+            self.cur.execute(INSERT_BODY_CLASSROOM_TABLE)
+            # self.cur.execute(INSERT_HOURS)
+            self.conn.commit()
+            print("Данные в таблицы успешно добавлены.")
+            return True
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Ошибка в insert_static_body_classroom: {e}.")
             return False
 
     def insert_tablename_value(self, table: str, name: str) -> bool:
@@ -731,7 +765,7 @@ class Connect:
             return False
 
 
-    def select_linking(self) -> list:
+    def select_linking(self) -> List[Tuple[str, str, str, str, int]]:
         """Функция для вытягивания всех данных из linking"""
         try:
             self.cur.execute(SELECT_LINKING)
@@ -845,6 +879,17 @@ class Connect:
             self.conn.rollback()
             print(f"Ошибка при удалении данных в hours where group_name={group} and subject_name={subject}: {e}.")
             return False
+    
+    def delete_from_tgsl_t_s_name(self, teacher: str, subject: str) -> bool:
+        """Функция удаления данных из teacher_group_subject_ls по teacher и subject"""
+        try:
+            self.cur.execute(DELETE_FROM_TGSL_T_S_NAME, (teacher, subject, ))
+            self.conn.commit()
+            return True
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Ошибка в delete_from_tgsl_t_s_name: {e}")
+            return False
 
     def delete_subject_tgsl(self, subject: str) -> bool:
         """Функция удаления данных из teacher_group_subject_ls по названию предмета"""
@@ -913,7 +958,7 @@ class Connect:
             print(f"Ошибка при проверке строк в {table}: {e}.")
             return False
 
-    def select_filtered_table(self, subject: str, group: str) -> list:
+    def select_filtered_table(self, subject: str, group: str) -> List[Tuple[str, str, int, int, int]]:
         """Функция для фильтрованного вывода всех данных в hours (вкладка - Админ Панель)"""
         try:
             query = "SELECT subject_name, group_name, seminars, lectures, labs FROM hours WHERE 1=1"
@@ -935,6 +980,13 @@ class Connect:
 def main():
     connect = Connect()
     _con, _cur = connect.conn, connect.cur
+    teachers = connect.select_teachers()
+    all_tgsl = []
+    for t in teachers:
+        all_tgsl.append(connect.select_teacher_group_subject_ls(t))
+    print(all_tgsl)
+    a = connect.select_teacher_group_subject_ls('Антонова В.А.')
+    # print(a)
     # connect.create_tables()
     # connect.drop_tables()
     # connect.create_tables()

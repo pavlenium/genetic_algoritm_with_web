@@ -17,7 +17,18 @@ from app.admin.download_excel import download_excel_schedule
 from app.admin.transform_schedule_data import transform_schedule
 from app.admin.transform_linking import transform_linkings
 
+import logging
+
 admin_router = Blueprint("admin", __name__)
+
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler("admin.log"),
+        logging.StreamHandler()
+    ]
+)
 
 
 @admin_router.route("/", methods=["POST", "GET"])
@@ -199,6 +210,7 @@ def choice():
             subject = request.form.get("anketa-sel-subj")
             id_teacher = connect.select_id_table_name("teachers", teacher)
             id_subject = connect.select_id_table_name('subjects', subject)
+            # logging.info(f'\n\n1. teacher: {teacher}, subject: {subject},\n id_t: {id_teacher}, id_s: {id_subject}')
             return redirect(f'/admin/{id_teacher}/{id_subject}')
 
         elif action == "insert_table":
@@ -208,6 +220,7 @@ def choice():
         elif action == "drop_table":
             connect.drop_tables()
             connect.create_tables()
+            connect.insert_static_body_classroom_times()
 
         elif action.startswith("redact_hours"):
             subject, group = action.split("_")[2:4]
@@ -236,6 +249,19 @@ def choice():
             connect.delete_linking_stroke(subj, type_subj, int(id_para))
             # connect.linking_edit_id_para()
             return redirect(url_for("admin.choice", active_tab="linking-tab"))
+
+        elif action == "edit_anketa":
+            teacher = request.form.get("teacher")
+            subject = request.form.get("subject")
+            id_teacher = connect.select_id_table_name("teachers", teacher)
+            id_subject = connect.select_id_table_name('subjects', subject)
+            return redirect(f'/admin/{id_teacher}/{id_subject}')
+
+        elif action == "delete_anketa":
+            teacher = request.form.get("teacher")
+            subject = request.form.get("subject")
+            connect.delete_from_tgsl_t_s_name(teacher, subject)
+            return redirect(url_for("admin.choice", active_tab="anketa-tab"))
 
         elif action == "schedule_browser":
             return redirect("/admin/schedule")
@@ -272,6 +298,11 @@ def choice():
     data_linking = connect.select_linking()
     transform_linking = transform_linkings(data_linking)
     transform_linking = sorted(transform_linking, key=lambda x: x[-1])
+
+    all_tgsl = []
+    for people in peoples:
+        all_tgsl.append(connect.select_teacher_group_subject_ls(people))
+    # print(all_tgsl)
     # print(transform_linking)
     # print(transform_linking)
     # print(locks, '\n\n\nUGAGAG\n\n\n')
@@ -292,7 +323,8 @@ def choice():
                            link_subject=link_subject,
                            link_type_subject=link_type_subject,
                            linking_remember=linking_remember,
-                           linkings=transform_linking
+                           linkings=transform_linking,
+                           all_tgsl=all_tgsl
                            )
 
 
@@ -311,6 +343,7 @@ def schedule():
 
     url = config.Config().generator_pavel_view
     response = requests.get(url)
+    print(f'')
     if response.status_code == 200:
         data = response.json()
         # print("Received data:", data)
@@ -331,10 +364,24 @@ def schedule():
         # print(locked_slots,'\n\n\n\n\n\n\n\n')
 
         # {1: ["ИУ10-11", "ИУ10-12"],..}
-        groups_by_courses: dict[int, list[str]] = dict(enumerate([list(map(lambda x: x[0], filter(
-            lambda x: x and (re.match(rf"^ИУ10-{i * 2}\d$", x[0]) or re.match(rf"^ИУ10-{i * 2 - 1}\d$", x[0])),
-            metadata["groups"]))) for i in range(1, 7)], start=1))
 
+        # groups_by_courses: dict[int, list[str]] = dict(enumerate([list(map(lambda x: x[0], filter(
+        #     lambda x: x and (re.match(rf"^ИУ10-{i * 2}\d$", x[0]) or re.match(rf"^ИУ10-{i * 2 - 1}\d$", x[0])),
+        #     metadata["groups"]))) for i in range(1, 7)], start=1))
+
+        groups = metadata.get("groups", [])
+
+        groups_by_courses = {
+            i: [
+                group for group in groups
+                if isinstance(group, str) and (
+                    re.match(rf"^ИУ10-{i * 2}\d$", group) or
+                    re.match(rf"^ИУ10-{i * 2 - 1}\d$", group)
+                )
+            ]
+            for i in range(1, 7)
+        }
+        # print(f'\n\n\nuser: {session.get("user")},\n\ncurrent_course: {session.get("current_course", "1")},\n\ncurrent_week_type: {session.get("current_week_type", "all")},\n\nmetadata: {metadata},\n\nschedule: {schedule},\n\ngroups_by_courses: {groups_by_courses}\n\n\n')
         return render_template("schedule_web.html",
                                user=session.get("user"),
                                current_course=session.get("current_course", "1"),
@@ -613,8 +660,9 @@ def anketa_tsg(teacher_id: int, subject_id: int):
     # subjects_list = connect.select_subjects()
     subject = connect.select_name_by_id('subjects', subject_id)
     # print(subject)
+    # logging.info(f'\n\n2. teacher: {user}, subject: {subject},\n id_t: {teacher_id}, id_s: {subject_id}')
     groups = connect.select_groups()
-    subject_list: list[str] = connect.select_subjects()
+    # subject_list: list[str] = connect.select_subjects()
     if request.method == "POST":
         result = {
             "table_sem": [],
@@ -632,10 +680,10 @@ def anketa_tsg(teacher_id: int, subject_id: int):
         connect.insert_teacher_group_subject_ls(final_result)
         return redirect(url_for("admin.choice", active_tab="anketa-tab"))
 
-    if len(subject_list)<subject_id:
-        return redirect(url_for("admin.choice", active_tab="anketa-tab"))
+    # if len(subject_list)<subject_id:
+        # return redirect(url_for("admin.choice", active_tab="anketa-tab"))
     # print(user)
-    subject = subject_list[subject_id-1]
+    # subject = subject_list[subject_id-1]
     data_tgsl = connect.select_teacher_group_subject_ls(user)
     if user in data_tgsl and subject in data_tgsl[user]:
         data_tgsl = connect.select_teacher_group_subject_ls(user)[user][subject]

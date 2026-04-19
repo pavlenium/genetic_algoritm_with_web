@@ -17,14 +17,18 @@ def login():
         connect = Connect()
         user = request.form.get("username")
         passw = request.form.get("password")
-        if auth(user, passw) or (user == "s" and passw == "s"): #FIXME
+
+        if user == "s" and passw == "s":#TODO УБРАТЬ В ПРОДЕ
+            session["user"] = user
+            session["logged_in"] = True
+            session["adm"] = True
+            return redirect(url_for("basic.basic"))
+        
+        if auth(user, passw):
             session["logged_in"] = True
             session["user"] = user
-            if user_info(user, 'ScheduleGeneratorAdmins').status_code == 200 or (user == "s"): #FIXME
+            if user_info(user, 'ScheduleGeneratorAdmins').status_code == 200:
                 session["adm"] = True
-            if user == "s": #TODO Убрать ! ! ! ! ! ! ! ! ! ! ! ! ! !
-                session["user"] = user
-            else:
                 session["user"] = user_info(user, 'ScheduleGeneratorAccess')['displayName']
             if not session["user"] in connect.select_teachers():
                 connect.insert_teacher(session["user"])

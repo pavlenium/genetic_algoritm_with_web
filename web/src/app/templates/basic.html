@@ -5,20 +5,132 @@
 {% block link_style %}<link rel="stylesheet" href="{{ url_for('static', filename='basic.css') }}">{% endblock %}
 
 {% block content %}
-<div class="hero-header">
-    <div class="header-content">
-        <h1 class="animated-title">
-            <span class="title-word title-word-1">Сайт</span>
-            <span class="title-word title-word-2">предназначен</span>
-            <span class="title-word title-word-3">для сбора</span>
-            <span class="title-word title-word-4">информации</span>
-            <span class="title-word title-word-5">о предпочтениях</span>
-            <span class="title-word title-word-6">преподавателей</span>
-            <span class="title-word title-word-7">и их работе</span>
-            <span class="title-word title-word-8">с группами</span>
-        </h1>
-        <div class="header-decoration"></div>
-    </div>
-</div>
+<section class="landing-hero">
+    <div class="landing-hero__bg"></div>
 
+    <div class="landing-hero__content">
+        <div class="hero-badge">Интеллектуальная генерация расписания</div>
+
+        <h1 class="hero-title">
+            Система автоматизирует сбор данных,
+            учитывает предпочтения преподавателей
+            и формирует расписание
+            <span>с помощью генетического алгоритма</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            Платформа объединяет анкеты, контингент, предметы, аудитории и ограничения,
+            а затем подбирает оптимальную конфигурацию расписания с применением
+            генетического алгоритма и случайной мутации для поиска более удачных решений.
+        </p>
+
+        <div class="hero-actions">
+            <a href="#features" class="hero-btn hero-btn--primary">Как это работает</a>
+        </div>
+
+        <div class="hero-metrics">
+            <div class="metric-card">
+                <div class="metric-card__value">Анкеты</div>
+                <div class="metric-card__label">сбор предпочтений преподавателей и работы с группами</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-card__value">Ограничения</div>
+                <div class="metric-card__label">учёт слотов, аудиторий, нагрузки и связок пар</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-card__value">Оптимизация</div>
+                <div class="metric-card__label">поиск лучшего решения через эволюционный подбор</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="features-section" id="features">
+    <div class="section-header">
+        <div class="section-badge">Ключевые возможности</div>
+        <h2>От сбора входных данных до готового расписания</h2>
+        <p>
+            Сервис помогает не просто хранить информацию, а превращать её
+            в практический результат — сбалансированное и удобное расписание.
+        </p>
+    </div>
+
+    <div class="features-grid">
+        <article class="feature-card">
+            <div class="feature-card__icon">01</div>
+            <h3>Сбор предпочтений</h3>
+            <p>
+                Преподаватели указывают удобные часы, форматы занятий и особенности работы с группами.
+            </p>
+        </article>
+
+        <article class="feature-card">
+            <div class="feature-card__icon">02</div>
+            <h3>Учет ограничений</h3>
+            <p>
+                Система учитывает аудитории, свойства предметов, блокировки слотов,
+                линковку пар и нагрузку по учебному плану.
+            </p>
+        </article>
+
+        <article class="feature-card">
+            <div class="feature-card__icon">03</div>
+            <h3>Автоматическая генерация</h3>
+            <p>
+                Расписание строится алгоритмически: решения эволюционируют,
+                а случайная мутация помогает выйти на более удачную конфигурацию.
+            </p>
+        </article>
+
+        <article class="feature-card">
+            <div class="feature-card__icon">04</div>
+            <h3>Готовый результат</h3>
+            <p>
+                После расчета расписание можно просматривать, анализировать и выгружать
+                в удобном формате для дальнейшей работы.
+            </p>
+        </article>
+    </div>
+</section>
+
+<section class="process-section">
+    <div class="section-header">
+        <div class="section-badge">Логика работы</div>
+        <h2>Почему это выглядит убедительно</h2>
+    </div>
+
+    <div class="process-timeline">
+        <div class="process-step">
+            <div class="process-step__dot"></div>
+            <div class="process-step__content">
+                <h3>Шаг 1. Подготовка данных</h3>
+                <p>Система собирает все сущности: преподавателей, группы, предметы, аудитории и ограничения.</p>
+            </div>
+        </div>
+
+        <div class="process-step">
+            <div class="process-step__dot"></div>
+            <div class="process-step__content">
+                <h3>Шаг 2. Оценка вариантов</h3>
+                <p>Каждый вариант расписания получает оценку по набору критериев и конфликтов.</p>
+            </div>
+        </div>
+
+        <div class="process-step">
+            <div class="process-step__dot"></div>
+            <div class="process-step__content">
+                <h3>Шаг 3. Эволюционный поиск</h3>
+                <p>Генетический алгоритм комбинирует удачные решения, а случайная мутация расширяет пространство поиска.</p>
+            </div>
+        </div>
+
+        <div class="process-step">
+            <div class="process-step__dot"></div>
+            <div class="process-step__content">
+                <h3>Шаг 4. Выдача лучшего результата</h3>
+                <p>На выходе — более устойчивое и реалистичное расписание, чем при ручной сборке “в лоб”.</p>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

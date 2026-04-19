@@ -33,17 +33,40 @@
 <div class="admin-container">
     <h1 class="admin-header">Административная панель</h1>
     <!-- Навигационные вкладки -->
-    <div class="admin-tabs">
-        <button class="tab-button active" onclick="openAdminTab('teachers-tab', event)">Преподаватели</button>
-        <button class="tab-button" onclick="openAdminTab('classrooms-tab', event)">Аудитории</button>
-        <button class="tab-button" onclick="openAdminTab('groups-tab', event)">Группы</button>
-        <button class="tab-button" onclick="openAdminTab('subjects-tab', event)">Предметы</button>
-        <button class="tab-button" onclick="openAdminTab('properties-tab', event)">Свойства</button>
-        <button class="tab-button" onclick="openAdminTab('hours-tab', event)">Часы</button>
-        <button class="tab-button" onclick="openAdminTab('anketa-tab', event)">Анкета</button>
-        <button class="tab-button" onclick="openAdminTab('lock-slot-tab', event)">Блокировка слотов</button>
-        <button class="tab-button" onclick="openAdminTab('linking-tab', event)">Линковка пар</button>
-        <button class="tab-button" onclick="openAdminTab('schedule-tab', event)">Расписание</button>
+    <div class="admin-tabs-wrapper">
+        <div class="admin-tab-group admin-tab-group-contingent">
+            <div class="tab-group-title">Контингент</div>
+            <div class="admin-tab-buttons">
+                <button class="tab-button tab-button-contingent active" onclick="openAdminTab('teachers-tab', event)">Преподаватели</button>
+                <button class="tab-button tab-button-contingent" onclick="openAdminTab('groups-tab', event)">Группы</button>
+            </div>
+        </div>
+
+        <div class="admin-tab-group admin-tab-group-subjects">
+            <div class="tab-group-title">Предметы</div>
+            <div class="admin-tab-buttons admin-tab-buttons-subjects">
+                <button class="tab-button tab-button-subjects tab-button-secondary tab-subjects-properties" onclick="openAdminTab('properties-tab', event)">Свойства предметов</button>
+                <button class="tab-button tab-button-subjects tab-button-secondary tab-subjects-classrooms" onclick="openAdminTab('classrooms-tab', event)">Аудитории</button>
+                <button class="tab-button tab-button-subjects tab-subjects-main" onclick="openAdminTab('subjects-tab', event)">Предметы</button>
+            </div>
+        </div>
+
+        <div class="admin-tab-group admin-tab-group-pairs">
+            <div class="tab-group-title">Управление парами</div>
+            <div class="admin-tab-buttons admin-tab-buttons-pairs">
+                <button class="tab-button tab-button-pairs tab-pairs-anketa" onclick="openAdminTab('anketa-tab', event)">Удобные часы</button>
+                <button class="tab-button tab-button-pairs tab-pairs-lock" onclick="openAdminTab('lock-slot-tab', event)">Блокировка слотов</button>
+                <button class="tab-button tab-button-pairs tab-pairs-linking" onclick="openAdminTab('linking-tab', event)">Линковка пар</button>
+            </div>
+        </div>
+
+        <div class="admin-tab-group admin-tab-group-schedule">
+            <div class="tab-group-title">Расписание</div>
+            <div class="admin-tab-buttons admin-tab-buttons-schedule">
+                <button class="tab-button tab-button-schedule tab-schedule-main" onclick="openAdminTab('schedule-tab', event)">Расписание</button>
+                <button class="tab-button tab-button-schedule tab-button-secondary tab-schedule-hours" onclick="openAdminTab('hours-tab', event)">Нагрузка по Уч.Плану</button>
+            </div>
+        </div>
     </div>
 
 <!-- Вкладка преподавателей -->
@@ -522,6 +545,201 @@
                     <i class="fas fa-plus"></i> Подтвердить
                 </button>
             </form>
+
+            <div class="admin-section anketa-summary-section">
+                <h3>Сохранённые анкеты</h3>
+
+                {% set courses = {
+                    '1 Курс': range(11, 20),
+                    '2 Курс': range(31, 40),
+                    '3 Курс': range(51, 60),
+                    '4 Курс': range(71, 80),
+                    '5 Курс': range(91, 100),
+                    '6 Курс': range(111, 120)
+                } %}
+
+                <div class="data-table">
+                    <table class="anketa-summary-main-table">
+                        <thead>
+                            <tr>
+                                <th class="teacher-col">Преподаватель</th>
+                                <th class="subject-col">Предмет</th>
+                                <th class="groups-col">Выбранные группы</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set ns = namespace(has_rows=false) %}
+
+                            {% for teacher_block in all_tgsl %}
+                                {% if teacher_block %}
+                                    {% for teacher_name, teacher_subjects in teacher_block.items() %}
+                                        {% for subject_name, subject_data in teacher_subjects.items() %}
+                                            {% set ns.has_rows = true %}
+                                            <tr>
+                                                <td class="anketa-teacher-cell">
+                                                    <strong>{{ teacher_name }}</strong>
+                                                    <form method="post" style="display:inline;">
+                                                        <input type="hidden" name="active_tab" value="linking-tab">
+                                                        <input type="hidden" name="teacher" value="{{ teacher_name }}">
+                                                        <input type="hidden" name="subject" value="{{ subject_name }}">
+                                                        <button type="submit" name="action" value="edit_anketa" class="form-button" style="background-color: rgb(78, 185, 185); color: white;">
+                                                            Редактировать
+                                                        </button>
+                                                    </form>
+                                                    <form method="post" style="display:inline;" onsubmit="return confirm('Удалить эту запись?');">
+                                                        <input type="hidden" name="active_tab" value="linking-tab">
+                                                        <input type="hidden" name="teacher" value="{{ teacher_name }}">
+                                                        <input type="hidden" name="subject" value="{{ subject_name }}">
+                                                        <button type="submit" name="action" value="delete_anketa" class="form-button" style="background-color: crimson; color: white;">
+                                                            Удалить
+                                                        </button>
+                                                    </form>
+                                                </td>
+
+                                                <td class="anketa-subject-cell">
+                                                    {{ subject_name }}
+                                                </td>
+
+                                                <td class="anketa-tables-cell">
+                                                    <div class="anketa-table-block">
+                                                        <h4>Семинары</h4>
+                                                        <table class="data-table anketa-inner-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    {% for course_name, numbers in courses.items() %}
+                                                                        <th>{{ course_name }}</th>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    {% for course_name, numbers in courses.items() %}
+                                                                        <td>
+                                                                            {% for num in numbers %}
+                                                                                {% set group_name = 'ИУ10-' ~ num %}
+                                                                                {% set exists = namespace(found=false, count=0) %}
+                                                                                {% for existing_group_name, student_count in groups %}
+                                                                                    {% if existing_group_name == group_name %}
+                                                                                        {% set exists.found = true %}
+                                                                                        {% set exists.count = student_count %}
+                                                                                    {% endif %}
+                                                                                {% endfor %}
+
+                                                                                {% if exists.found %}
+                                                                                    <label class="anketa-group-line">
+                                                                                        {{ group_name }}
+                                                                                        <input type="checkbox"
+                                                                                            disabled
+                                                                                            {% if group_name in subject_data.get('семинар', []) %}checked{% endif %}>
+                                                                                    </label>
+                                                                                    <br>
+                                                                                {% endif %}
+                                                                            {% endfor %}
+                                                                        </td>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <div class="anketa-table-block">
+                                                        <h4>Лекции</h4>
+                                                        <table class="data-table anketa-inner-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    {% for course_name, numbers in courses.items() %}
+                                                                        <th>{{ course_name }}</th>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    {% for course_name, numbers in courses.items() %}
+                                                                        <td>
+                                                                            {% for num in numbers %}
+                                                                                {% set group_name = 'ИУ10-' ~ num %}
+                                                                                {% set exists = namespace(found=false, count=0) %}
+                                                                                {% for existing_group_name, student_count in groups %}
+                                                                                    {% if existing_group_name == group_name %}
+                                                                                        {% set exists.found = true %}
+                                                                                        {% set exists.count = student_count %}
+                                                                                    {% endif %}
+                                                                                {% endfor %}
+
+                                                                                {% if exists.found %}
+                                                                                    <label class="anketa-group-line">
+                                                                                        {{ group_name }}
+                                                                                        <input type="checkbox"
+                                                                                            disabled
+                                                                                            {% if group_name in subject_data.get('лекция', []) %}checked{% endif %}>
+                                                                                    </label>
+                                                                                    <br>
+                                                                                {% endif %}
+                                                                            {% endfor %}
+                                                                        </td>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <div class="anketa-table-block">
+                                                        <h4>Лабораторные работы</h4>
+                                                        <table class="data-table anketa-inner-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    {% for course_name, numbers in courses.items() %}
+                                                                        <th>{{ course_name }}</th>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    {% for course_name, numbers in courses.items() %}
+                                                                        <td>
+                                                                            {% for num in numbers %}
+                                                                                {% set group_name = 'ИУ10-' ~ num %}
+                                                                                {% set exists = namespace(found=false, count=0) %}
+                                                                                {% for existing_group_name, student_count in groups %}
+                                                                                    {% if existing_group_name == group_name %}
+                                                                                        {% set exists.found = true %}
+                                                                                        {% set exists.count = student_count %}
+                                                                                    {% endif %}
+                                                                                {% endfor %}
+
+                                                                                {% if exists.found %}
+                                                                                    <label class="anketa-group-line">
+                                                                                        {{ group_name }}
+                                                                                        <input type="checkbox"
+                                                                                            disabled
+                                                                                            {% if group_name in subject_data.get('лаба', []) %}checked{% endif %}>
+                                                                                    </label>
+                                                                                    <br>
+                                                                                {% endif %}
+                                                                            {% endfor %}
+                                                                        </td>
+                                                                    {% endfor %}
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if not ns.has_rows %}
+                                <tr>
+                                    <td colspan="3">Пока нет сохранённых анкет</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1204,6 +1422,44 @@
 </script>
 
 
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('anketa-sel-teach-subj');
+  if (!form) return;
+
+  const btn = form.querySelector('button[type="submit"]');
+  if (!btn) return;
+
+  function sync(inputId, selectId) {
+    const input = document.getElementById(inputId);
+    const select = document.getElementById(selectId);
+    if (!input || !select) return;
+
+    // если уже выбрано автокомплитом — не трогаем
+    if (select.value) return;
+
+    const text = input.value.trim().toLowerCase();
+    if (!text) return;
+
+    // 1) точное совпадение
+    let opt = Array.from(select.options)
+      .find(o => o.text.trim().toLowerCase() === text);
+
+    // 2) если точного нет — берём первый, который начинается с введённого
+    if (!opt) {
+      opt = Array.from(select.options)
+        .find(o => o.text.trim().toLowerCase().startsWith(text));
+    }
+
+    if (opt) select.value = opt.value;
+  }
+
+  btn.addEventListener('click', () => {
+    sync('anketa-teacher-search', 'anketa-sel-teach');
+    sync('anketa-subject-search', 'anketa-sel-subj');
+  });
+});
+</script>
 
 
 {% endblock %}

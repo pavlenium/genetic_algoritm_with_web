@@ -142,30 +142,206 @@
     }
 
     /* Стили вкладок */
-    .admin-tabs {
-        display: flex;
-        border-bottom: 1px solid #ddd;
+    .admin-tabs-wrapper {
+        display: grid;
+        grid-template-columns: 2fr 3fr 3fr 2fr;
+        gap: 14px;
+        align-items: start;
         margin-bottom: 20px;
     }
 
+    .admin-tab-group {
+        min-width: 0;
+    }
+
+    .tab-group-title {
+        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.2;
+        color: #2c3e50;
+        margin-bottom: 16px;
+        letter-spacing: 0.02em;
+    }
+
+    .admin-tab-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+        gap: 4px;
+        padding-bottom: 1px;
+    }
+
     .tab-button {
-        padding: 12px 20px;
-        background: #f8f9fa;
+        min-height: 110px;
+        padding: 18px 16px;
         border: none;
-        border-radius: 4px 4px 0 0;
-        margin-right: 5px;
+        border-radius: 10px 10px 0 0;
         cursor: pointer;
+        font-size: 18px;
         font-weight: 500;
-        transition: all 0.3s;
+        line-height: 1.35;
+        color: #1f2937;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        box-shadow: inset 0 -1px 0 rgba(255,255,255,0.35);
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
 
     .tab-button:hover {
-        background: #e9ecef;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+        filter: brightness(0.98);
+    }
+
+    .tab-button-contingent {
+        background: #8ecae6;
+    }
+
+    .tab-button-subjects {
+        background: #b8e3c6;
+    }
+
+    .tab-button-pairs {
+        background: #d8c7f3;
+    }
+
+    .tab-button-schedule {
+        background: #f6d7a7;
+    }
+
+    .tab-button-secondary.tab-button-contingent {
+        background: #5fa8ca;
+    }
+
+    .tab-button-secondary.tab-button-subjects {
+        background: #83c19b;
+    }
+
+    .tab-button-secondary.tab-button-pairs {
+        background: #ab90dd;
+    }
+
+    .tab-button-secondary.tab-button-schedule {
+        background: #d9b06f;
+    }
+
+
+
+
+    .admin-tab-group:first-child .admin-tab-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-tab-buttons-subjects {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "properties classrooms"
+            "subjects subjects";
+    }
+
+    .tab-subjects-properties {
+        grid-area: properties;
+    }
+
+    .tab-subjects-classrooms {
+        grid-area: classrooms;
+    }
+
+    .tab-subjects-main {
+        grid-area: subjects;
+    }
+
+    .admin-tab-buttons-pairs {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas:
+            "anketa anketa"
+            "lock linking";
+    }
+
+    .tab-pairs-anketa {
+        grid-area: anketa;
+    }
+
+    .tab-pairs-lock {
+        grid-area: lock;
+    }
+
+    .tab-pairs-linking {
+        grid-area: linking;
+    }
+
+    .admin-tab-buttons-schedule {
+        grid-template-columns: 1fr;
     }
 
     .tab-button.active {
-        background: #3498db;
-        color: white;
+        color: #ffffff !important;
+        font-weight: 700;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+    }
+
+    .tab-button-contingent.active {
+        background: #3f9ad6 !important;
+    }
+
+    .tab-button-subjects.active {
+        background: #52b788 !important;
+    }
+
+    .tab-button-pairs.active {
+        background: #8b5fd3 !important;
+    }
+
+    .tab-button-schedule.active {
+        background: #f4a261 !important;
+    }
+
+    @media (max-width: 1400px) {
+        .admin-tabs-wrapper {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .admin-tab-buttons {
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        }
+
+        .admin-tab-group:first-child .admin-tab-buttons {
+            grid-template-columns: 1fr;
+        }
+
+        .admin-tab-buttons-subjects,
+        .admin-tab-buttons-pairs {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .tab-group-title {
+            font-size: 24px;
+        }
+
+        .tab-button {
+            min-height: 96px;
+            padding: 16px 12px;
+            font-size: 16px;
+            overflow: hidden;
+        }
+    }
+
+    @media (max-width: 900px) {
+        .admin-tabs-wrapper {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tab-group-title {
+            font-size: 22px;
+        }
+
+        .tab-button {
+            min-height: 84px;
+            font-size: 16px;
+        }
     }
 
     /* Стили содержимого вкладок */
@@ -173,8 +349,8 @@
         display: none;
         padding: 20px;
         background: white;
-        border-radius: 0 0 4px 4px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     }
 
     .admin-section {
@@ -539,12 +715,6 @@
     display: block;
     }
 
-    .tab-button.active {
-    background: #3498db !important;
-    color: white !important;
-    font-weight: bold;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
 
     .slot-active {
     background-color: #ffb3b3; /* мягкий красный фон */
@@ -576,3 +746,483 @@
     .autocomplete-item.active {
         background: #f1f3f5;
     }
+
+
+    .anketa-summary-table td {
+    vertical-align: top;
+}
+
+.anketa-types-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.anketa-type-card {
+    border: 1px solid #e3e7ee;
+    border-radius: 8px;
+    background: #f8f9fb;
+    padding: 10px;
+}
+
+.anketa-type-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #2f4b68;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e3e7ee;
+    padding-bottom: 6px;
+}
+
+.anketa-checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.anketa-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: #333;
+    margin: 0;
+}
+
+.anketa-checkbox-item input[type="checkbox"] {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.anketa-teacher-cell,
+.anketa-subject-cell {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+@media (max-width: 1400px) {
+    .anketa-types-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.anketa-summary-main-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.anketa-summary-main-table th,
+.anketa-summary-main-table td {
+    vertical-align: middle;
+}
+
+.teacher-col {
+    width: 18%;
+}
+
+.subject-col {
+    width: 20%;
+}
+
+.groups-col {
+    width: 62%;
+}
+
+.anketa-teacher-cell,
+.anketa-subject-cell {
+    vertical-align: middle !important;
+    font-size: 16px;
+    line-height: 1.45;
+    padding: 14px 12px;
+}
+
+.anketa-tables-cell {
+    vertical-align: top !important;
+    padding: 10px 12px;
+}
+
+.anketa-table-block {
+    margin-bottom: 26px;
+}
+
+.anketa-table-block h4 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #243b53;
+}
+
+.anketa-inner-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.anketa-inner-table th,
+.anketa-inner-table td {
+    text-align: left;
+    vertical-align: top;
+    padding: 8px 10px;
+}
+
+.anketa-group-line {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #222;
+    margin-bottom: 2px;
+}
+
+.anketa-group-line input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    border: 1.5px solid #9aa4b2;
+    border-radius: 3px;
+    background: #fff;
+    display: inline-grid;
+    place-content: center;
+    cursor: default;
+    vertical-align: middle;
+}
+
+.anketa-group-line input[type="checkbox"]::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: #0d6efd;
+    border-radius: 2px;
+}
+
+.anketa-group-line input[type="checkbox"]:checked {
+    border-color: #0d6efd;
+    background: #eaf2ff;
+}
+
+.anketa-group-line input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+.anketa-group-line input[type="checkbox"]:disabled {
+    opacity: 1;
+    background-color: #fff;
+}
+
+
+/* ===== prettier admin content wrapper ===== */
+
+/* Общий контейнер активной вкладки */
+.admin-tab-content {
+    display: none;
+    padding: 28px;
+    background: linear-gradient(180deg, #f8fbff 0%, #f5f7fb 100%);
+    border: 1px solid #e5ecf4;
+    border-radius: 20px;
+    box-shadow:
+        0 10px 28px rgba(15, 23, 42, 0.06),
+        0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+/* Каждая секция как отдельная карточка */
+.admin-section {
+    margin-bottom: 22px;
+    padding: 22px 24px;
+    background: #ffffff;
+    border: 1px solid #e7edf5;
+    border-radius: 16px;
+    box-shadow:
+        0 6px 20px rgba(15, 23, 42, 0.05),
+        0 1px 3px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-section:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 10px 26px rgba(15, 23, 42, 0.07),
+        0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.admin-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Заголовки секций */
+.admin-section h3 {
+    margin: 0 0 18px 0;
+    padding-left: 14px;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #243b53;
+    border-left: 5px solid #4b9cd3;
+}
+
+/* Формы */
+.admin-form {
+    margin-bottom: 0;
+}
+
+.form-row,
+.form-grid,
+.form-grid-classroom {
+    gap: 14px;
+}
+
+/* Поля формы */
+.form-input,
+.form-select,
+.form-multiselect {
+    min-height: 46px;
+    padding: 11px 14px;
+    border: 1px solid #d7e0ea;
+    border-radius: 10px;
+    background: #fcfdff;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.form-multiselect {
+    min-height: 120px;
+}
+
+.form-input:hover,
+.form-select:hover,
+.form-multiselect:hover {
+    border-color: #bfd0e2;
+    background: #ffffff;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-multiselect:focus {
+    outline: none;
+    border-color: #7aa7d9;
+    box-shadow: 0 0 0 4px rgba(122, 167, 217, 0.15);
+    background: #ffffff;
+}
+
+/* Кнопки */
+.form-button,
+.submit-btn,
+.btn {
+    min-height: 46px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.form-button:hover,
+.submit-btn:hover,
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.form-button:active,
+.submit-btn:active,
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Таблицы */
+.data-table {
+    overflow-x: auto;
+    border-radius: 14px;
+}
+
+.data-table table,
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 0;
+    background: #ffffff;
+    border: 1px solid #e8eef5;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.data-table thead th,
+.table thead th,
+th {
+    background: #f3f7fb;
+    color: #243b53;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table th,
+.data-table td,
+.table th,
+.table td,
+th,
+td {
+    padding: 12px 14px;
+    vertical-align: middle;
+}
+
+.data-table tbody tr,
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.data-table tbody tr:nth-child(even),
+.table tbody tr:nth-child(even) {
+    background: #fbfcfe;
+}
+
+.data-table tbody tr:hover,
+.table tbody tr:hover,
+tr:hover {
+    background: #f7fbff;
+}
+
+/* Красивее разделитель внутри больших блоков */
+.admin-section + .admin-section {
+    margin-top: 18px;
+}
+
+/* Ошибки */
+.error-message {
+    display: inline-flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #f05252;
+    box-shadow: 0 4px 10px rgba(240, 82, 82, 0.18);
+}
+
+/* Префикс группы */
+.prefix-text {
+    background: #f4f7fb;
+    border-color: #d7e0ea;
+    color: #486581;
+    border-radius: 10px 0 0 10px;
+}
+
+.with-prefix {
+    border-radius: 0 10px 10px 0 !important;
+}
+
+/* Мультиселект */
+select[multiple] option {
+    padding: 8px 10px;
+    border-radius: 6px;
+}
+
+select[multiple] option.selected,
+select[multiple] option:checked {
+    background-color: #4b9cd3 !important;
+    color: #fff;
+}
+
+/* Кнопки в таблицах, чтобы выглядели аккуратнее */
+.data-table .form-button,
+.table .form-button {
+    min-height: 38px;
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 14px;
+}
+
+/* Немного воздуха на мобильных */
+@media (max-width: 768px) {
+    .admin-tab-content {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .admin-section {
+        padding: 16px;
+        border-radius: 14px;
+    }
+
+    .admin-section h3 {
+        font-size: 18px;
+    }
+
+    .form-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-input,
+    .form-select,
+    .form-multiselect,
+    .form-button,
+    .submit-btn,
+    .btn {
+        width: 100%;
+    }
+}
+
+/* Более заметная обертка всей вкладки */
+.admin-tab-content {
+    display: none;
+    margin-top: 22px;
+    padding: 26px;
+    background: #eef3f8;
+    border: 2px solid #cfd9e6;
+    border-radius: 24px;
+    box-shadow:
+        0 18px 42px rgba(15, 23, 42, 0.10),
+        0 4px 14px rgba(15, 23, 42, 0.06);
+    position: relative;
+}
+
+/* Внутренняя подложка, чтобы контейнер выглядел глубже */
+.admin-tab-content::before {
+    content: "";
+    position: absolute;
+    inset: 12px;
+    border-radius: 18px;
+    background: #f8fbff;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+}
+
+
+
+/* Чтобы контент был поверх декоративных слоев */
+.admin-tab-content > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Карточки секций тоже можно чуть усилить */
+.admin-section {
+    background: #ffffff;
+    border: 1px solid #d8e3ee;
+    border-radius: 16px;
+    box-shadow:
+        0 8px 22px rgba(15, 23, 42, 0.06),
+        0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+    .admin-tab-content {
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .admin-tab-content::before {
+        inset: 8px;
+        border-radius: 14px;
+    }
+
+}

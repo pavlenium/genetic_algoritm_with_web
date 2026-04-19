@@ -214,3 +214,7 @@ td:not(:last-child) {
     font-size: 9px;
     font-weight: bold;
 }
+
+tbody tr:not(:last-child) .time-column {
+    border-bottom: 1.5px solid #bcc2c9 !important;
+}

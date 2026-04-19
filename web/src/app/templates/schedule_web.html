@@ -41,9 +41,9 @@
             <tbody>
             {% for lesson_slot in metadata["lesson_slots"] %}
             <tr>
-                <td class="time-column">{{lesson_slot[0]}}</td>
+                <td class="time-column">{{lesson_slot}}</td>
                 {% for groupname in groups_by_courses[course] %}
-                <td class="group-cell" id="cell_{{day}}_{{groupname}}_{{lesson_slot[0]}}">
+                <td class="group-cell" id="cell_{{day}}_{{groupname}}_{{lesson_slot}}">
                 </td>
                 {% endfor %}
             </tr>

@@ -347,16 +347,16 @@ select name from times;
 INSERT_TEACHERS = """
 insert into teachers (name)
 values
-  ('Погорелко Е.А.'),
-  ('Кожухов К.А.'),
-  ('Зязина Н.А.'),
-  ('Киселев П.Б.'),
-  ('Галактионов А.А.'),
-  ('Дубинин А.А.'),
-  ('Дербин Е.А.'),
-  ('Янгель К.Д.'),
-  ('Владычинская В.А.'),
-  ('Антонова В.А.');
+  ('Преподаватель 1'),
+  ('Преподаватель 2'),
+  ('Преподаватель 3'),
+  ('Преподаватель 4'),
+  ('Преподаватель 5'),
+  ('Преподаватель 6'),
+  ('Преподаватель 7'),
+  ('Преподаватель 8'),
+  ('Преподаватель 9'),
+  ('Преподаватель 10');
 """
 
 INSERT_GROUPS = """
@@ -915,7 +915,9 @@ SELECT_ALL_CLASSROOMS = """
 select * from classrooms;
 """
 
-
+DELETE_FROM_TGSL_T_S_NAME = """
+delete from teacher_group_subject_ls where teacher=%s and subject=%s
+"""
 
 DELETE_TABLE = """
 delete from
